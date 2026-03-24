@@ -1,0 +1,109 @@
+<ion-header >
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/auth/login"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Create Account</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content >
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="branding">
+        <ion-icon name="book-outline" size="large"></ion-icon>
+        <h1>LibraryPro</h1>
+        <p>Create your free account</p>
+      </div>
+
+      <form [formGroup]="signupForm" class="auth-form">
+        <ion-item>
+          <ion-label position="floating">Library Name</ion-label>
+          <ion-input
+            type="text"
+            formControlName="libraryName"
+            [class.ion-invalid]="libraryName?.invalid && libraryName?.touched"
+          ></ion-input>
+        </ion-item>
+        <ion-text *ngIf="libraryName?.invalid && libraryName?.touched" color="danger" class="inline-error">
+          <small *ngIf="libraryName?.errors?.['required']">Library name is required</small>
+          <small *ngIf="libraryName?.errors?.['minlength']">Library name must be at least 3 characters</small>
+        </ion-text>
+
+        <ion-item>
+          <ion-label position="floating">City</ion-label>
+          <ion-input
+            type="text"
+            formControlName="city"
+            [class.ion-invalid]="city?.invalid && city?.touched"
+          ></ion-input>
+        </ion-item>
+        <ion-text *ngIf="city?.invalid && city?.touched" color="danger" class="inline-error">
+          <small *ngIf="city?.errors?.['required']">City is required</small>
+        </ion-text>
+
+        <ion-item>
+          <ion-label position="floating">Total Seats Capacity</ion-label>
+          <ion-input
+            type="number"
+            formControlName="totalSeats"
+            min="1"
+            [class.ion-invalid]="totalSeats?.invalid && totalSeats?.touched"
+          ></ion-input>
+        </ion-item>
+        <ion-text *ngIf="totalSeats?.invalid && totalSeats?.touched" color="danger" class="inline-error">
+          <small *ngIf="totalSeats?.errors?.['required']">Total seats is required</small>
+          <small *ngIf="totalSeats?.errors?.['min']">Total seats must be at least 1</small>
+        </ion-text>
+
+        <ion-item>
+          <ion-label position="floating">Email</ion-label>
+          <ion-input
+            type="email"
+            formControlName="email"
+            [class.ion-invalid]="email?.invalid && email?.touched"
+          ></ion-input>
+        </ion-item>
+        <ion-text *ngIf="email?.invalid && email?.touched" color="danger" class="inline-error">
+          <small *ngIf="email?.errors?.['required']">Email is required</small>
+          <small *ngIf="email?.errors?.['email']">Please enter a valid email</small>
+        </ion-text>
+
+        <ion-item>
+          <ion-label position="floating">Password</ion-label>
+          <ion-input
+            type="password"
+            formControlName="password"
+            [class.ion-invalid]="password?.invalid && password?.touched"
+          ></ion-input>
+        </ion-item>
+        <ion-text *ngIf="password?.invalid && password?.touched" color="danger" class="inline-error">
+          <small *ngIf="password?.errors?.['required']">Password is required</small>
+          <small *ngIf="password?.errors?.['minlength']">Password must be at least 6 characters</small>
+        </ion-text>
+
+        <ion-item>
+          <ion-label position="floating">Confirm Password</ion-label>
+          <ion-input
+            type="password"
+            formControlName="confirmPassword"
+            [class.ion-invalid]="confirmPassword?.invalid && confirmPassword?.touched"
+          ></ion-input>
+        </ion-item>
+        <ion-text *ngIf="signupForm.get('confirmPassword')?.touched" color="danger" class="inline-error">
+          <small *ngIf="signupForm.errors?.['passwordMismatch']">Passwords do not match</small>
+        </ion-text>
+
+        <ion-button expand="block" [disabled]="signupForm.invalid || isLoading" (click)="onSignup()">
+          <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+          <span *ngIf="!isLoading">Create Account</span>
+        </ion-button>
+      </form>
+
+      <p class="auth-switch">
+        Already have an account?
+        <ion-router-link routerLink="/auth/login" routerDirection="back">Login</ion-router-link>
+      </p>
+    </div>
+  </div>
+</ion-content>

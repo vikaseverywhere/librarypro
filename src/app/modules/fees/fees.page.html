@@ -1,0 +1,103 @@
+<ion-header >
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Fees Management</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content >
+  <div class="fees-header">
+    <h1>Fee Management</h1>
+    <p>Track and manage student fees</p>
+  </div>
+
+  <div class="fees-container">
+    <!-- Fee Stats -->
+    <div class="fee-stats-section">
+      <h2 class="section-title">Fee Overview</h2>
+      <div class="fee-stats">
+        <div class="fee-stat pending">
+          <div class="stat-number">₹{{ feeStats.totalPending | number: '1.0-0' }}</div>
+          <div class="stat-text">Pending</div>
+        </div>
+        <div class="fee-stat overdue">
+          <div class="stat-number">₹{{ feeStats.totalOverdue | number: '1.0-0' }}</div>
+          <div class="stat-text">Overdue</div>
+        </div>
+        <div class="fee-stat collected">
+          <div class="stat-number">₹{{ feeStats.totalPaid | number: '1.0-0' }}</div>
+          <div class="stat-text">Collected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <ion-button expand="block" class="collect-btn" (click)="onAddFee()">
+        <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+        Add Fee Record
+      </ion-button>
+      <ion-button expand="block" fill="outline" (click)="onViewAllPaid()">
+        <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
+        View Paid Fees
+      </ion-button>
+    </div>
+
+    <!-- Pending Fees -->
+    <div class="fees-list">
+      <h2 class="section-title">Pending Fees</h2>
+      
+      <div *ngIf="isLoading" class="loading-state">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Loading fees...</p>
+      </div>
+
+      <div *ngIf="!isLoading && pendingFees.length === 0" class="empty-state">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+        <h3>All fees collected!</h3>
+        <p>No pending fees at the moment</p>
+      </div>
+
+      <div *ngIf="!isLoading && pendingFees.length > 0" class="fee-cards">
+        <div class="fee-card" *ngFor="let fee of pendingFees" [class.overdue]="fee.status === 'overdue'">
+          <div class="fee-header">
+            <div class="fee-student">
+              <div class="avatar">{{ getInitials(fee.studentName) }}</div>
+              <div>
+                <h3>{{ fee.studentName }}</h3>
+                <p>ID: {{ fee.studentId }}</p>
+              </div>
+            </div>
+            <div class="fee-amount">₹{{ fee.amount | number: '1.0-0' }}</div>
+          </div>
+          <div class="fee-details">
+            <div class="detail">
+              <span class="label">Month:</span>
+              <span>{{ fee.month }}</span>
+            </div>
+            <div class="detail">
+              <span class="label">Due Date:</span>
+              <span>{{ fee.dueDate | date:'MMM d, y' }}</span>
+            </div>
+            <div class="detail">
+              <span class="label">Status:</span>
+              <span [class]="'status ' + fee.status">{{ fee.status | titlecase }}</span>
+            </div>
+          </div>
+          <div class="fee-actions">
+            <ion-button size="small" (click)="onMarkPaid(fee)">
+              <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+              Mark Paid
+            </ion-button>
+            <ion-button size="small" fill="outline" (click)="onSendReminder(fee)">
+              <ion-icon name="mail-outline" slot="start"></ion-icon>
+              Send Reminder
+            </ion-button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>

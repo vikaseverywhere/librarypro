@@ -1,0 +1,191 @@
+<ion-header >
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Settings</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content >
+  <div class="settings-header">
+    <div class="profile-section">
+      <div class="profile-avatar">{{ getInitials(libraryName) }}</div>
+      <h1>{{ libraryName }}</h1>
+      <p class="profile-subtitle">Library Administrator</p>
+    </div>
+  </div>
+
+  <div class="settings-container">
+    <!-- Library Settings -->
+    <div class="settings-group">
+      <h2 class="section-title">Library Settings</h2>
+      <div class="settings-card">
+        <!-- Library Name -->
+        <div class="setting-item">
+          <div class="setting-info" *ngIf="!editing['libraryName']">
+            <h3>Library Name</h3>
+            <p class="value">{{ libraryName }}</p>
+          </div>
+          <div class="setting-edit" *ngIf="editing['libraryName']">
+            <label>Library Name</label>
+            <input type="text" [(ngModel)]="editValues['libraryName']" class="edit-input" />
+            <div class="edit-actions">
+              <ion-button size="small" (click)="saveField('libraryName')" [disabled]="isSaving['libraryName']">
+                <ion-spinner *ngIf="isSaving['libraryName']" name="crescent"></ion-spinner>
+                <span *ngIf="!isSaving['libraryName']">Save</span>
+              </ion-button>
+              <ion-button size="small" fill="outline" (click)="cancelEdit('libraryName')">Cancel</ion-button>
+            </div>
+          </div>
+          <ion-button *ngIf="!editing['libraryName']" fill="clear" (click)="startEdit('libraryName', libraryName)">
+            <ion-icon name="create-outline"></ion-icon>
+          </ion-button>
+        </div>
+        <ion-item-divider></ion-item-divider>
+
+        <!-- City -->
+        <div class="setting-item">
+          <div class="setting-info" *ngIf="!editing['city']">
+            <h3>City</h3>
+            <p class="value">{{ city || 'Not set' }}</p>
+          </div>
+          <div class="setting-edit" *ngIf="editing['city']">
+            <label>City</label>
+            <input type="text" [(ngModel)]="editValues['city']" class="edit-input" />
+            <div class="edit-actions">
+              <ion-button size="small" (click)="saveField('city')" [disabled]="isSaving['city']">
+                <ion-spinner *ngIf="isSaving['city']" name="crescent"></ion-spinner>
+                <span *ngIf="!isSaving['city']">Save</span>
+              </ion-button>
+              <ion-button size="small" fill="outline" (click)="cancelEdit('city')">Cancel</ion-button>
+            </div>
+          </div>
+          <ion-button *ngIf="!editing['city']" fill="clear" (click)="startEdit('city', city)">
+            <ion-icon name="create-outline"></ion-icon>
+          </ion-button>
+        </div>
+        <ion-item-divider></ion-item-divider>
+
+        <!-- Total Seats -->
+        <div class="setting-item">
+          <div class="setting-info" *ngIf="!editing['totalSeats']">
+            <h3>Total Seats</h3>
+            <p class="value">{{ totalSeats }} seats</p>
+          </div>
+          <div class="setting-edit" *ngIf="editing['totalSeats']">
+            <label>Total Seats</label>
+            <input type="number" [(ngModel)]="editValues['totalSeats']" class="edit-input" min="1" />
+            <div class="edit-actions">
+              <ion-button size="small" (click)="saveField('totalSeats')" [disabled]="isSaving['totalSeats']">
+                <ion-spinner *ngIf="isSaving['totalSeats']" name="crescent"></ion-spinner>
+                <span *ngIf="!isSaving['totalSeats']">Save</span>
+              </ion-button>
+              <ion-button size="small" fill="outline" (click)="cancelEdit('totalSeats')">Cancel</ion-button>
+            </div>
+          </div>
+          <ion-button *ngIf="!editing['totalSeats']" fill="clear" (click)="startEdit('totalSeats', totalSeats)">
+            <ion-icon name="create-outline"></ion-icon>
+          </ion-button>
+        </div>
+        <ion-item-divider></ion-item-divider>
+
+        <!-- Monthly Fee -->
+        <div class="setting-item">
+          <div class="setting-info" *ngIf="!editing['monthlyFee']">
+            <h3>Monthly Fee</h3>
+            <p class="value">₹{{ monthlyFee | number: '1.0-0' }}</p>
+          </div>
+          <div class="setting-edit" *ngIf="editing['monthlyFee']">
+            <label>Monthly Fee (₹)</label>
+            <input type="number" [(ngModel)]="editValues['monthlyFee']" class="edit-input" min="0" />
+            <div class="edit-actions">
+              <ion-button size="small" (click)="saveField('monthlyFee')" [disabled]="isSaving['monthlyFee']">
+                <ion-spinner *ngIf="isSaving['monthlyFee']" name="crescent"></ion-spinner>
+                <span *ngIf="!isSaving['monthlyFee']">Save</span>
+              </ion-button>
+              <ion-button size="small" fill="outline" (click)="cancelEdit('monthlyFee')">Cancel</ion-button>
+            </div>
+          </div>
+          <ion-button *ngIf="!editing['monthlyFee']" fill="clear" (click)="startEdit('monthlyFee', monthlyFee)">
+            <ion-icon name="create-outline"></ion-icon>
+          </ion-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Settings -->
+    <div class="settings-group">
+      <h2 class="section-title">Account Settings</h2>
+      <div class="settings-card">
+        <div class="setting-item">
+          <div class="setting-info">
+            <h3>Email Address</h3>
+            <p class="value">{{ userEmail }}</p>
+          </div>
+          <ion-button fill="clear">
+            <ion-icon name="create-outline"></ion-icon>
+          </ion-button>
+        </div>
+        <ion-item-divider></ion-item-divider>
+        <div class="setting-item">
+          <div class="setting-info">
+            <h3>Change Password</h3>
+            <p class="subtitle">Update your password</p>
+          </div>
+          <ion-button fill="clear" (click)="onChangePassword()">
+            <ion-icon name="key-outline"></ion-icon>
+          </ion-button>
+        </div>
+        <ion-item-divider></ion-item-divider>
+        <div class="setting-item">
+          <div class="setting-info">
+            <h3>Two-Factor Authentication</h3>
+            <p class="subtitle">Add extra security</p>
+          </div>
+          <ion-toggle></ion-toggle>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subscription & Billing -->
+    <div class="settings-group">
+      <h2 class="section-title">Subscription</h2>
+      <div class="subscription-card">
+        <div class="subscription-info">
+          <div class="plan-badge">ACTIVE</div>
+          <h3>Premium Plan</h3>
+          <p class="plan-details">Unlimited students and features</p>
+          <p class="renewal">Renews on April 15, 2026</p>
+        </div>
+        <div class="plan-actions">
+          <ion-button size="small">
+            <ion-icon name="card-outline" slot="start"></ion-icon>
+            Update Payment Method
+          </ion-button>
+          <ion-button size="small" fill="outline">
+            <ion-icon name="document-outline" slot="start"></ion-icon>
+            View Invoice
+          </ion-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="settings-group">
+      <h2 class="section-title">Danger Zone</h2>
+      <div class="danger-cards">
+        <div class="danger-card">
+          <div class="danger-info">
+            <h3>Logout</h3>
+            <p class="subtitle">Sign out from all devices</p>
+          </div>
+          <ion-button color="warning" (click)="onLogout()">
+            <ion-icon name="log-out-outline" slot="start"></ion-icon>
+            Logout
+          </ion-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>

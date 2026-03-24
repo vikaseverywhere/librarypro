@@ -1,0 +1,55 @@
+<ion-header >
+  <ion-toolbar>
+    <ion-title>LibraryPro Login</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content >
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="branding">
+        <ion-icon name="book-outline" size="large"></ion-icon>
+        <h1>LibraryPro</h1>
+        <p>Library Management Made Simple</p>
+      </div>
+
+      <form [formGroup]="loginForm" class="auth-form">
+        <ion-item>
+          <ion-label position="floating">Email</ion-label>
+          <ion-input
+            type="email"
+            formControlName="email"
+            [class.ion-invalid]="email?.invalid && email?.touched"
+          ></ion-input>
+        </ion-item>
+        <ion-text *ngIf="email?.invalid && email?.touched" color="danger" class="inline-error">
+          <small *ngIf="email?.errors?.['required']">Email is required</small>
+          <small *ngIf="email?.errors?.['email']">Please enter a valid email</small>
+        </ion-text>
+
+        <ion-item>
+          <ion-label position="floating">Password</ion-label>
+          <ion-input
+            type="password"
+            formControlName="password"
+            [class.ion-invalid]="password?.invalid && password?.touched"
+          ></ion-input>
+        </ion-item>
+        <ion-text *ngIf="password?.invalid && password?.touched" color="danger" class="inline-error">
+          <small *ngIf="password?.errors?.['required']">Password is required</small>
+          <small *ngIf="password?.errors?.['minlength']">Password must be at least 6 characters</small>
+        </ion-text>
+
+        <ion-button expand="block" [disabled]="loginForm.invalid || isLoading" (click)="onLogin()">
+          <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+          <span *ngIf="!isLoading">Login</span>
+        </ion-button>
+      </form>
+
+      <p class="auth-switch">
+        Don’t have an account?
+        <ion-router-link routerLink="/auth/signup" routerDirection="forward">Sign Up</ion-router-link>
+      </p>
+    </div>
+  </div>
+</ion-content>

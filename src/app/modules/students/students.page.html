@@ -1,0 +1,106 @@
+<ion-page>
+<ion-header >
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Students</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content >
+  <div class="students-header">
+    <h1>Student Management</h1>
+    <p>Manage all your library students in one place</p>
+  </div>
+
+  <div class="students-container">
+    <!-- Search Bar -->
+    <div class="search-section">
+      <ion-searchbar
+        [(ngModel)]="searchTerm"
+        (ionChange)="onSearchChange()"
+        placeholder="Search students..."
+        debounce="500"
+      ></ion-searchbar>
+    </div>
+
+    <!-- Add Student Button -->
+    <div class="action-buttons">
+      <ion-button expand="block" class="add-btn" routerLink="/students/add">
+        <ion-icon name="person-add-outline" slot="start"></ion-icon>
+        Add New Student
+      </ion-button>
+    </div>
+
+    <!-- Students List -->
+    <div class="students-list">
+      <h2 class="section-title">All Students</h2>
+      
+      <div *ngIf="isLoading" class="loading-state">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Loading students...</p>
+      </div>
+
+      <div *ngIf="!isLoading && students.length === 0" class="empty-state">
+        <ion-icon name="people-outline"></ion-icon>
+        <h3>No students yet</h3>
+        <p>Add your first student to get started</p>
+        <ion-button routerLink="/students/add">
+          <ion-icon name="person-add-outline" slot="start"></ion-icon>
+          Add Student
+        </ion-button>
+      </div>
+
+      <div *ngIf="!isLoading && filteredStudents.length === 0 && students.length > 0" class="empty-state">
+        <ion-icon name="search-outline"></ion-icon>
+        <h3>No students found</h3>
+        <p>Try adjusting your search terms</p>
+      </div>
+
+      <div *ngIf="!isLoading && filteredStudents.length > 0" class="student-cards">
+        <div class="student-card" *ngFor="let student of filteredStudents">
+          <div class="student-header">
+            <div class="student-avatar">{{ getInitials(student.name) }}</div>
+            <div class="student-info">
+              <h3>{{ student.name }}</h3>
+              <p class="roll">ID: {{ student.studentId }}</p>
+            </div>
+            <div class="student-actions">
+              <ion-button fill="clear" size="small" [routerLink]="['/students/edit', student.studentId]">
+                <ion-icon name="create-outline"></ion-icon>
+              </ion-button>
+              <ion-button fill="clear" size="small" color="danger" (click)="onDeleteStudent(student)">
+                <ion-icon name="trash-outline"></ion-icon>
+              </ion-button>
+            </div>
+          </div>
+          <div class="student-details">
+            <div class="detail-item">
+              <ion-icon name="mail-outline"></ion-icon>
+              <span>{{ student.email }}</span>
+            </div>
+            <div class="detail-item">
+              <ion-icon name="call-outline"></ion-icon>
+              <span>{{ student.phone }}</span>
+            </div>
+            <div class="detail-item">
+              <ion-icon name="pricetag-outline"></ion-icon>
+              <span>₹{{ student.totalFeePending | number: '1.0-0' }}</span>
+            </div>
+            <div class="detail-item">
+              <ion-icon name="grid-outline"></ion-icon>
+              <span>Seat: {{ student.seatNumber || 'Not assigned' }}</span>
+            </div>
+          </div>
+          <div class="student-status">
+            <span [class]="student.seatStatus === 'occupied' ? 'paid' : 'pending'">
+              {{ student.seatStatus | titlecase }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>
+</ion-page>

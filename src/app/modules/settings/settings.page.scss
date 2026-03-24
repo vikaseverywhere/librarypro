@@ -1,0 +1,271 @@
+ion-content {
+  --background: linear-gradient(135deg, #eafbff 0%, #f5f8ff 40%, #ffffff 100%);
+}
+
+.settings-header {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(43, 124, 212, 0.1) 0%, rgba(34, 102, 197, 0.05) 100%);
+}
+
+.profile-section {
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2b7cd4 0%, #2266c5 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin: 0 auto 1rem;
+    box-shadow: 0 4px 12px rgba(43, 124, 212, 0.3);
+  }
+
+  h1 {
+    margin: 0 0 0.5rem;
+    color: #1e3a5f;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  .profile-subtitle {
+    margin: 0;
+    color: #637898;
+    font-size: 0.95rem;
+  }
+}
+
+.settings-container {
+  padding: 1rem;
+}
+
+.section-title {
+  margin: 1.5rem 0 1rem;
+  color: #1e3a5f;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.settings-group {
+  margin-bottom: 1.5rem;
+}
+
+// Settings Card
+.settings-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(16, 71, 122, 0.08);
+  border: 1px solid rgba(30, 80, 130, 0.08);
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+
+  .setting-info {
+    flex: 1;
+
+    h3 {
+      margin: 0 0 0.3rem;
+      color: #1e3a5f;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .value {
+      margin: 0;
+      color: #637898;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #9cadbe;
+      font-size: 0.85rem;
+    }
+  }
+
+  .setting-edit {
+    flex: 1;
+
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      color: #1e3a5f;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .edit-input {
+      width: 100%;
+      padding: 0.7rem 0.8rem;
+      border: 2px solid #2b7cd4;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #1e3a5f;
+      background: white;
+      outline: none;
+      box-sizing: border-box;
+      box-shadow: 0 0 0 3px rgba(43, 124, 212, 0.1);
+    }
+
+    .edit-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+
+      ion-button {
+        --height: 36px;
+        --border-radius: 6px;
+        min-width: 88px;
+        width: auto;
+        font-size: 0.85rem;
+        margin: 0;
+
+        &:first-child {
+          --background: #2b7cd4;
+          --color: white;
+        }
+
+        &[fill="outline"] {
+          --border-color: #cbd5e1;
+          --color: #637898;
+        }
+      }
+    }
+  }
+
+  > ion-button {
+    --border-radius: 50%;
+    --background: transparent;
+    --color: #2b7cd4;
+    height: 36px;
+    width: 36px;
+    margin: 0;
+  }
+
+  ion-toggle {
+    margin: 0;
+  }
+}
+
+ion-item-divider {
+  background: rgba(30, 80, 130, 0.08);
+  border: none;
+  min-height: 1px;
+}
+
+// Subscription Card
+.subscription-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(16, 71, 122, 0.08);
+  border: 1px solid rgba(30, 80, 130, 0.08);
+  background: linear-gradient(135deg, rgba(43, 124, 212, 0.05) 0%, rgba(34, 102, 197, 0.02) 100%);
+
+  .subscription-info {
+    margin-bottom: 1.5rem;
+
+    .plan-badge {
+      display: inline-block;
+      background: #d1fae5;
+      color: #065f46;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    h3 {
+      margin: 0.5rem 0 0.3rem;
+      color: #1e3a5f;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .plan-details {
+      margin: 0.3rem 0;
+      color: #637898;
+      font-size: 0.9rem;
+    }
+
+    .renewal {
+      margin: 0.3rem 0 0;
+      color: #9cadbe;
+      font-size: 0.85rem;
+    }
+  }
+
+  .plan-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    ion-button {
+      --border-radius: 8px;
+      --height: 40px;
+      font-size: 0.9rem;
+
+      &:first-child {
+        --background: #2b7cd4;
+        --color: white;
+      }
+
+      &[fill="outline"] {
+        --border-color: #2b7cd4;
+        --color: #2b7cd4;
+      }
+    }
+  }
+}
+
+// Danger Cards
+.danger-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.danger-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(16, 71, 122, 0.08);
+  border: 1px solid rgba(30, 80, 130, 0.08);
+  border-left: 4px solid #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .danger-info {
+    flex: 1;
+
+    h3 {
+      margin: 0 0 0.3rem;
+      color: #1e3a5f;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #9cadbe;
+      font-size: 0.85rem;
+    }
+  }
+
+  ion-button {
+    --border-radius: 8px;
+    --height: 40px;
+    margin: 0;
+  }
+}

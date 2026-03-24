@@ -1,0 +1,30 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "students",
+      "fieldPath": "libraryId",
+      "indexes": [
+        {
+          "fields": [
+            ["libraryId", "Ascending"],
+            ["createdAt", "Descending"]
+          ]
+        }
+      ]
+    },
+    {
+      "collectionGroup": "fees",
+      "fieldPath": "libraryId",
+      "indexes": [
+        {
+          "fields": [
+            ["libraryId", "Ascending"],
+            ["status", "Ascending"],
+            ["dueDate", "Descending"]
+          ]
+        }
+      ]
+    }
+  ]
+}

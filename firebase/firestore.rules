@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function belongsToLibrary(libraryId) {
+      return isSignedIn()
+        && exists(userDoc(request.auth.uid))
+        && get(userDoc(request.auth.uid)).data.libraryId == libraryId;
+    }
+    
+    // Users collection - each user document
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+    
+    // Libraries collection with subcollections
+    match /libraries/{libraryId} {
+      // Only library owner can read/write library settings
+      allow read, write: if belongsToLibrary(libraryId);
+      
+      // Students subcollection
+      match /students/{studentId} {
+        allow read, write: if belongsToLibrary(libraryId);
+      }
+      
+      // Fees subcollection
+      match /fees/{feeId} {
+        allow read, write: if belongsToLibrary(libraryId);
+      }
+      
+      // Transactions subcollection
+      match /transactions/{transactionId} {
+        allow read: if belongsToLibrary(libraryId);
+        allow write: if false; // Only Cloud Functions can write
+      }
+      
+      // Invoices storage (future subcollection)
+      match /invoices/{invoiceId} {
+        allow read: if belongsToLibrary(libraryId);
+        allow write: if false; // Only Cloud Functions can write
+      }
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,214 @@
+ion-content {
+  --background: linear-gradient(135deg, #eafbff 0%, #f5f8ff 40%, #ffffff 100%);
+}
+
+.students-header {
+  padding: 2rem 1.5rem 1rem;
+  background: linear-gradient(135deg, rgba(43, 124, 212, 0.1) 0%, rgba(34, 102, 197, 0.05) 100%);
+
+  h1 {
+    margin: 0 0 0.5rem;
+    color: #1e3a5f;
+    font-size: 1.8rem;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0;
+    color: #637898;
+    font-size: 0.95rem;
+  }
+}
+
+.students-container {
+  padding: 1rem;
+}
+
+.section-title {
+  margin: 1.5rem 0 1rem;
+  color: #1e3a5f;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+// Search Section
+.search-section {
+  margin-bottom: 1rem;
+
+  ion-searchbar {
+    --background: white;
+    --border-radius: 10px;
+    --box-shadow: 0 2px 8px rgba(16, 71, 122, 0.08);
+    padding: 0.5rem 0;
+  }
+}
+
+// Action Buttons
+.action-buttons {
+  margin-bottom: 1.5rem;
+
+  ion-button {
+    --border-radius: 10px;
+    --background: #2b7cd4;
+    --color: #fff;
+    height: 52px;
+    font-weight: 700;
+
+    &.add-btn {
+      --background: linear-gradient(135deg, #2b7cd4 0%, #2266c5 100%);
+    }
+  }
+}
+
+// Loading & Empty States
+.loading-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 1rem;
+  text-align: center;
+
+  ion-spinner {
+    --color: #2b7cd4;
+  }
+
+  ion-icon {
+    font-size: 4rem;
+    color: #c8d9f4;
+    margin-bottom: 0.5rem;
+  }
+
+  h3 {
+    margin: 0;
+    color: #1e3a5f;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.5rem 0 0;
+    color: #637898;
+    font-size: 0.9rem;
+  }
+
+  ion-button {
+    margin-top: 1rem;
+  }
+}
+
+// Student Cards
+.student-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.student-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(16, 71, 122, 0.08);
+  border: 1px solid rgba(30, 80, 130, 0.08);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(16, 71, 122, 0.15);
+  }
+
+  .student-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    .student-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2b7cd4 0%, #2266c5 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .student-info {
+      flex: 1;
+
+      h3 {
+        margin: 0 0 0.2rem;
+        color: #1e3a5f;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      .roll {
+        margin: 0;
+        color: #9cadbe;
+        font-size: 0.85rem;
+      }
+    }
+
+    .student-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+  }
+
+  .student-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(30, 80, 130, 0.08);
+
+    .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      color: #637898;
+      font-size: 0.9rem;
+
+      ion-icon {
+        color: #2b7cd4;
+        font-size: 1.2rem;
+      }
+    }
+  }
+
+  .student-status {
+    padding-top: 1rem;
+    text-align: center;
+
+    span {
+      display: inline-block;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+
+      &.paid {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      &.pending {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      &.overdue {
+        background: #fee2e2;
+        color: #7f1d1d;
+      }
+    }
+  }
+}

@@ -1,0 +1,124 @@
+<ion-page>
+<ion-header >
+  <ion-toolbar>
+    <ion-title>LibraryPro Dashboard</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="onLogout()">
+        <ion-icon name="log-out-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content >
+  <div class="dashboard-header">
+    <h1>Welcome back, {{ libraryName }}!</h1>
+    <p class="date-time">{{ currentDate | date:'EEEE, MMMM d, y' }}</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>Loading your dashboard...</p>
+  </div>
+
+  <div *ngIf="!isLoading" class="dashboard-container">
+    <!-- Stats Grid -->
+    <div class="stats-section">
+      <h2 class="section-title">Quick Stats</h2>
+      <div class="stats-grid">
+        <div class="stat-card primary" (click)="navigateToStudents()">
+          <ion-icon name="people-outline"></ion-icon>
+          <div class="stat-value">{{ stats.totalStudents }}</div>
+          <div class="stat-label">Students</div>
+          <div class="stat-subtitle">{{ stats.occupiedSeats }} occupied seats</div>
+        </div>
+        <div class="stat-card warning" (click)="navigateToFees()">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <div class="stat-value">₹{{ stats.totalFeesPending | number: '1.0-0' }}</div>
+          <div class="stat-label">Pending Fees</div>
+          <div class="stat-subtitle">From {{ stats.totalStudents }} students</div>
+        </div>
+        <div class="stat-card danger" (click)="navigateToFees()">
+          <ion-icon name="close-circle-outline"></ion-icon>
+          <div class="stat-value">₹{{ stats.totalFeesOverdue | number: '1.0-0' }}</div>
+          <div class="stat-label">Overdue Fees</div>
+          <div class="stat-subtitle">Action needed</div>
+        </div>
+        <div class="stat-card success">
+          <ion-icon name="trending-up-outline"></ion-icon>
+          <div class="stat-value">₹{{ stats.monthlyRevenue | number: '1.0-0' }}</div>
+          <div class="stat-label">Monthly Revenue</div>
+          <div class="stat-subtitle">This month</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Cards -->
+    <div class="actions-section">
+      <h2 class="section-title">Quick Actions</h2>
+      <div class="action-grid">
+        <div class="action-card" (click)="onQuickAddStudent()">
+          <ion-icon name="person-add-outline" size="large"></ion-icon>
+          <h3>Add Student</h3>
+          <p>Register a new student</p>
+        </div>
+        <div class="action-card" (click)="onQuickCollectFees()">
+          <ion-icon name="card-outline" size="large"></ion-icon>
+          <h3>Collect Fees</h3>
+          <p>Record fee payments</p>
+        </div>
+        <div class="action-card" (click)="onQuickSettings()">
+          <ion-icon name="settings-outline" size="large"></ion-icon>
+          <h3>Settings</h3>
+          <p>Manage library profile</p>
+        </div>
+        <div class="action-card" (click)="onQuickViewStudents()">
+          <ion-icon name="search-outline" size="large"></ion-icon>
+          <h3>View Students</h3>
+          <p>See all students list</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Library Info Card -->
+    <div class="info-section">
+      <div class="info-card">
+        <div class="info-header">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <h3>Library Information</h3>
+        </div>
+        <div class="info-items">
+          <div class="info-item">
+            <span class="label">Total Capacity:</span>
+            <span class="value" *ngIf="!isEditingCapacity">{{ stats.totalCapacity }} seats</span>
+            <div *ngIf="isEditingCapacity" style="display:flex; gap:0.5rem; align-items:center;">
+              <input
+                type="number"
+                min="1"
+                [(ngModel)]="capacityInput"
+                class="capacity-edit-input"
+              />
+              <ion-button size="small" (click)="saveCapacity()" [disabled]="isSavingCapacity">
+                <ion-spinner *ngIf="isSavingCapacity" name="crescent"></ion-spinner>
+                <span *ngIf="!isSavingCapacity">Save</span>
+              </ion-button>
+              <ion-button size="small" fill="outline" (click)="cancelCapacityEdit()" [disabled]="isSavingCapacity">Cancel</ion-button>
+            </div>
+            <ion-button *ngIf="!isEditingCapacity" size="small" fill="clear" (click)="startCapacityEdit()">
+              <ion-icon name="create-outline"></ion-icon>
+            </ion-button>
+          </div>
+          <div class="info-item">
+            <span class="label">Occupied:</span>
+            <span class="value occupied">{{ stats.occupiedSeats }} seats</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Available:</span>
+            <span class="value available">{{ stats.vacantSeats }} seats</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>
+</ion-page>
