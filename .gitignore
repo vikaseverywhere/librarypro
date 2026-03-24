@@ -10,6 +10,10 @@ node_modules/
 .angular/
 .env
 .env.local
+
+# Environment files with real secrets — never commit these
+src/environments/environment.ts
+src/environments/environment.prod.ts
 .DS_Store
 www/
 platforms/
