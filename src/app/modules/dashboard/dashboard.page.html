@@ -1,8 +1,22 @@
 <ion-page>
 <ion-header >
-  <ion-toolbar>
-    <ion-title>LibraryPro Dashboard</ion-title>
+  <ion-toolbar class="pro-toolbar">
+    <ion-title>
+      <div class="header-title">
+        <div class="header-main">LibraryPro</div>
+        <div class="header-sub">Dashboard • {{ libraryName }}</div>
+      </div>
+    </ion-title>
     <ion-buttons slot="end">
+      <div class="toolbar-avatar" *ngIf="libraryPhotoUrl">
+        <img [src]="libraryPhotoUrl" alt="Library photo" />
+      </div>
+      <div class="toolbar-avatar" *ngIf="!libraryPhotoUrl && ownerPhotoUrl">
+        <img [src]="ownerPhotoUrl" alt="Owner photo" />
+      </div>
+      <ion-button fill="clear" (click)="navigateToLibraries()">
+        <ion-icon name="business-outline"></ion-icon>
+      </ion-button>
       <ion-button (click)="onLogout()">
         <ion-icon name="log-out-outline"></ion-icon>
       </ion-button>
@@ -66,6 +80,11 @@
           <ion-icon name="card-outline" size="large"></ion-icon>
           <h3>Collect Fees</h3>
           <p>Record fee payments</p>
+        </div>
+        <div class="action-card" (click)="navigateToReceipts()">
+          <ion-icon name="receipt-outline" size="large"></ion-icon>
+          <h3>Receipts</h3>
+          <p>View payment history</p>
         </div>
         <div class="action-card" (click)="onQuickSettings()">
           <ion-icon name="settings-outline" size="large"></ion-icon>

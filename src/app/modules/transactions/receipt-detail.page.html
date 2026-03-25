@@ -1,0 +1,74 @@
+<ion-header>
+  <ion-toolbar class="pro-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/transactions"></ion-back-button>
+    </ion-buttons>
+    <ion-title>
+      <div class="header-title">
+        <div class="header-main">Receipt</div>
+        <div class="header-sub">{{ txn?.receiptNumber || txnId }}</div>
+      </div>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div style="padding:16px;">
+    <div *ngIf="isLoading" style="text-align:center; margin-top: 30px;">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p style="margin-top:12px;">Loading…</p>
+    </div>
+
+    <div *ngIf="!isLoading && !txn">
+      <ion-card>
+        <ion-card-content>
+          Receipt not found.
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <div *ngIf="!isLoading && txn">
+      <ion-card>
+        <ion-card-content>
+          <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+            <div style="flex: 0 0 auto;">
+              <img [src]="qrUrl" width="220" height="220" alt="Receipt QR" style="border-radius:12px; border:1px solid rgba(30,80,130,0.12);" />
+            </div>
+            <div style="flex: 1 1 240px;">
+              <div style="color:#637898; font-weight:800;">Student</div>
+              <div style="font-weight:900; color:#1e3a5f; font-size:1.1rem;">{{ txn.studentName || 'Unknown Student' }}</div>
+              <div style="color:#637898; font-weight:700; margin-top:4px;">{{ txn.studentId }}</div>
+
+              <div style="display:flex; gap:14px; margin-top: 12px; flex-wrap:wrap;">
+                <div>
+                  <div style="color:#637898; font-weight:800;">Type</div>
+                  <div style="font-weight:900; color:#1e3a5f;">{{ txn.type }}</div>
+                </div>
+                <div>
+                  <div style="color:#637898; font-weight:800;">Month</div>
+                  <div style="font-weight:900; color:#1e3a5f;">{{ txn.month }}</div>
+                </div>
+                <div>
+                  <div style="color:#637898; font-weight:800;">Amount</div>
+                  <div style="font-weight:900; color:#1e3a5f;">₹{{ txn.amount | number:'1.0-0' }}</div>
+                </div>
+              </div>
+
+              <div style="margin-top: 14px; display:flex; gap:10px; flex-wrap:wrap;">
+                <ion-button (click)="copyReceipt()" fill="outline">
+                  <ion-icon name="copy-outline" slot="start"></ion-icon>
+                  Copy Receipt No.
+                </ion-button>
+                <ion-button (click)="shareReceipt()">
+                  <ion-icon name="share-outline" slot="start"></ion-icon>
+                  Share
+                </ion-button>
+              </div>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+  </div>
+</ion-content>
+

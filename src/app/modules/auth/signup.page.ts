@@ -3,6 +3,10 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../core/auth/auth.service';
+import { getApp } from 'firebase/app';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { compressImageToJpeg } from '../../core/utils/image-compress';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 @Component({
   selector: 'app-signup',
@@ -12,13 +16,16 @@ import { AuthService } from '../../core/auth/auth.service';
 export class SignupPage implements OnInit {
   signupForm!: FormGroup;
   isLoading = false;
+  ownerPhotoFile: File | null = null;
+  libraryPhotoFile: File | null = null;
 
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
     private router: Router,
     private loadingController: LoadingController,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private firestore: AngularFirestore
   ) {}
 
   ngOnInit() {
@@ -30,6 +37,9 @@ export class SignupPage implements OnInit {
       libraryName: ['', [Validators.required, Validators.minLength(3)]],
       city: ['', [Validators.required]],
       totalSeats: [50, [Validators.required, Validators.min(1)]],
+      shiftCount: [2, [Validators.required, Validators.min(1), Validators.max(4)]],
+      shift1Fee: [2500, [Validators.required, Validators.min(0)]],
+      shift2Fee: [2500, [Validators.required, Validators.min(0)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]]
@@ -63,8 +73,45 @@ export class SignupPage implements OnInit {
     await loading.present();
 
     try {
-      const { email, password, libraryName, city, totalSeats } = this.signupForm.value;
-      await this.authService.signup(email, password, libraryName, city, Number(totalSeats));
+      const { email, password, libraryName, city, totalSeats, shiftCount, shift1Fee, shift2Fee } = this.signupForm.value;
+
+      const shifts = [];
+      const count = Number(shiftCount) || 1;
+      shifts.push({ id: 's1', name: 'Shift 1', monthlyFee: Number(shift1Fee) || 0 });
+      if (count >= 2) {
+        shifts.push({ id: 's2', name: 'Shift 2', monthlyFee: Number(shift2Fee) || 0 });
+      }
+
+      const profile = await this.authService.signup(
+        email,
+        password,
+        libraryName,
+        city,
+        Number(totalSeats),
+        shifts
+      );
+
+      // Upload optional photos (compressed) and store URLs.
+      const libraryId = profile.libraryId;
+      const uid = profile.uid;
+      const app = getApp();
+      const storage = getStorage(app);
+
+      if (this.ownerPhotoFile) {
+        const blob = await compressImageToJpeg(this.ownerPhotoFile, { maxSizePx: 720, quality: 0.7 });
+        const ref = storageRef(storage, `userUploads/${uid}/profile/owner.jpg`);
+        await uploadBytes(ref, blob);
+        const url = await getDownloadURL(ref);
+        await this.firestore.doc(`users/${uid}`).set({ photoUrl: url, updatedAt: new Date() }, { merge: true });
+      }
+
+      if (this.libraryPhotoFile) {
+        const blob = await compressImageToJpeg(this.libraryPhotoFile, { maxSizePx: 900, quality: 0.72 });
+        const ref = storageRef(storage, `userUploads/${uid}/libraries/${libraryId}/library.jpg`);
+        await uploadBytes(ref, blob);
+        const url = await getDownloadURL(ref);
+        await this.firestore.doc(`libraries/${libraryId}`).set({ photoUrl: url, updatedAt: new Date() }, { merge: true });
+      }
       
       await loading.dismiss();
       await this.showSuccess('Account created successfully!');
@@ -75,6 +122,16 @@ export class SignupPage implements OnInit {
     } finally {
       this.isLoading = false;
     }
+  }
+
+  onOwnerPhotoSelected(event: any) {
+    const f: File | undefined = event?.target?.files?.[0];
+    this.ownerPhotoFile = f || null;
+  }
+
+  onLibraryPhotoSelected(event: any) {
+    const f: File | undefined = event?.target?.files?.[0];
+    this.libraryPhotoFile = f || null;
   }
 
   async showError(message: string) {

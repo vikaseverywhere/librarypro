@@ -1,0 +1,66 @@
+<ion-header>
+  <ion-toolbar class="pro-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/libraries"></ion-back-button>
+    </ion-buttons>
+    <ion-title>
+      <div class="header-title">
+        <div class="header-main">Add Library</div>
+        <div class="header-sub">Create a new library for your students</div>
+      </div>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div style="padding: 16px;">
+    <ion-list>
+      <ion-item>
+        <ion-label position="stacked">Library Name</ion-label>
+        <ion-input [(ngModel)]="name" placeholder="e.g. Vikas Library"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">City</ion-label>
+        <ion-input [(ngModel)]="city" placeholder="e.g. Pune"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Total Seats</ion-label>
+        <ion-input type="number" [(ngModel)]="totalSeats" min="1"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Monthly Fee (INR)</ion-label>
+        <ion-input type="number" [(ngModel)]="monthlyFee" min="0"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">How many shifts?</ion-label>
+        <ion-input type="number" [(ngModel)]="shiftCount" min="1" max="4"></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="stacked">Shift 1 Monthly Fee (₹)</ion-label>
+        <ion-input type="number" [(ngModel)]="shift1Fee" min="0"></ion-input>
+      </ion-item>
+
+      <ion-item *ngIf="shiftCount >= 2">
+        <ion-label position="stacked">Shift 2 Monthly Fee (₹)</ion-label>
+        <ion-input type="number" [(ngModel)]="shift2Fee" min="0"></ion-input>
+      </ion-item>
+    </ion-list>
+
+    <div style="margin-top: 10px;">
+      <small style="color:#637898; font-weight:700;">Library Photo (optional)</small>
+      <input type="file" accept="image/*" (change)="onLibraryPhotoSelected($event)" />
+    </div>
+
+    <ion-button expand="block" (click)="onSubmit()" [disabled]="isSaving" style="margin-top: 18px;">
+      <ion-spinner *ngIf="isSaving" name="crescent" slot="start"></ion-spinner>
+      <span *ngIf="!isSaving">Create Library</span>
+      <span *ngIf="isSaving">Creating...</span>
+    </ion-button>
+  </div>
+</ion-content>
+

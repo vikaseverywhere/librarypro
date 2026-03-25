@@ -138,6 +138,19 @@ ion-content {
       font-weight: 700;
       font-size: 1.1rem;
       flex-shrink: 0;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      span {
+        padding: 0 2px;
+        text-transform: uppercase;
+      }
     }
 
     .student-info {

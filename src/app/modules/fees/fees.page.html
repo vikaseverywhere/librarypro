@@ -1,9 +1,20 @@
-<ion-header >
-  <ion-toolbar>
+<ion-header>
+  <ion-toolbar class="pro-toolbar">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/dashboard"></ion-back-button>
     </ion-buttons>
-    <ion-title>Fees Management</ion-title>
+    <ion-title>
+      <div class="header-title">
+        <div class="header-main">Fees</div>
+        <div class="header-sub">{{ libraryName }}</div>
+      </div>
+    </ion-title>
+    <ion-buttons slot="end" class="header-end">
+      <ion-button fill="clear">
+        <ion-icon name="mail-outline" slot="start"></ion-icon>
+        <span class="header-email">{{ userEmail }}</span>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -38,6 +49,10 @@
       <ion-button expand="block" class="collect-btn" (click)="onAddFee()">
         <ion-icon name="add-circle-outline" slot="start"></ion-icon>
         Add Fee Record
+      </ion-button>
+      <ion-button expand="block" fill="outline" (click)="onGenerateMonthlyFees()">
+        <ion-icon name="calendar-outline" slot="start"></ion-icon>
+        Generate Monthly Fees
       </ion-button>
       <ion-button expand="block" fill="outline" (click)="onViewAllPaid()">
         <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
@@ -90,6 +105,10 @@
             <ion-button size="small" (click)="onMarkPaid(fee)">
               <ion-icon name="checkmark-outline" slot="start"></ion-icon>
               Mark Paid
+            </ion-button>
+            <ion-button size="small" color="warning" fill="outline" (click)="onWaiveFee(fee)">
+              <ion-icon name="ban-outline" slot="start"></ion-icon>
+              Waive
             </ion-button>
             <ion-button size="small" fill="outline" (click)="onSendReminder(fee)">
               <ion-icon name="mail-outline" slot="start"></ion-icon>

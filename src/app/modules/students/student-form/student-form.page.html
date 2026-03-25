@@ -1,16 +1,27 @@
 <ion-page>
   <ion-header>
-    <ion-toolbar>
+    <ion-toolbar class="pro-toolbar">
       <ion-buttons slot="start">
         <ion-back-button defaultHref="/students"></ion-back-button>
       </ion-buttons>
-      <ion-title>Add Student</ion-title>
+      <ion-title>
+        <div class="header-title">
+          <div class="header-main">{{ isEditMode ? 'Update Student' : 'Add Student' }}</div>
+          <div class="header-sub">{{ libraryName }}</div>
+        </div>
+      </ion-title>
+      <ion-buttons slot="end" class="header-end">
+        <ion-button fill="clear">
+          <ion-icon name="person-outline" slot="start"></ion-icon>
+          <span class="header-email">{{ userEmail }}</span>
+        </ion-button>
+      </ion-buttons>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
     <div class="form-container">
-      <h2>Register New Student</h2>
+      <h2>{{ isEditMode ? 'Update Student' : 'Register New Student' }}</h2>
       <p>Fill in the details to add a new student</p>
 
       <ion-item>
@@ -53,6 +64,68 @@
           placeholder="Assign seat number"
         ></ion-input>
       </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Aadhaar Number</ion-label>
+        <ion-input
+          type="tel"
+          inputmode="numeric"
+          [(ngModel)]="formData.adharNumber"
+          name="adharNumber"
+          maxlength="12"
+          placeholder="12-digit Aadhaar"
+        ></ion-input>
+      </ion-item>
+
+      <div *ngIf="shifts.length > 0" style="margin: 0.5rem 0 1rem;">
+        <div style="font-weight: 800; color:#1e3a5f; margin-bottom: 0.5rem;">Select Shifts</div>
+        <ion-item *ngFor="let s of shifts">
+          <ion-label>{{ s.name }} (₹{{ s.monthlyFee | number: '1.0-0' }})</ion-label>
+          <ion-checkbox
+            slot="end"
+            [checked]="selectedShiftIds.includes(s.id)"
+            (ionChange)="onShiftToggle(s.id, $event.detail.checked)"
+          ></ion-checkbox>
+        </ion-item>
+        <div style="margin-top: 0.5rem; color:#637898; font-weight: 700;">
+          Calculated Monthly Fee: ₹{{ calculatedMonthlyFee | number:'1.0-0' }}
+        </div>
+      </div>
+
+      <ion-item>
+        <ion-label position="floating">Address Line 1</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.addressLine1" name="addressLine1"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="floating">Address Line 2</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.addressLine2" name="addressLine2"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="floating">State</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.state" name="state"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="floating">City</ion-label>
+        <ion-input type="text" [(ngModel)]="formData.city" name="city"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="floating">Pincode</ion-label>
+        <ion-input type="tel" inputmode="numeric" maxlength="6" [(ngModel)]="formData.pincode" name="pincode"></ion-input>
+      </ion-item>
+
+      <div class="photo-upload">
+        <ion-label class="photo-label">Student Photo</ion-label>
+
+        <div class="photo-preview">
+          <ion-img *ngIf="photoPreviewUrl" [src]="photoPreviewUrl"></ion-img>
+          <div *ngIf="!photoPreviewUrl" class="photo-placeholder">
+            <ion-icon name="person-outline"></ion-icon>
+            <span>No photo</span>
+          </div>
+        </div>
+
+        <input type="file" accept="image/*" (change)="onPhotoSelected($event)" />
+      </div>
 
       <ion-text color="danger" *ngIf="errorMessage">
         <p style="margin-top: 0.5rem;">{{ errorMessage }}</p>

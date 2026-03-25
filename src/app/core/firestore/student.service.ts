@@ -6,14 +6,34 @@ import { LibraryStateService } from '../library-state.service';
 export interface Student {
   id?: string;
   studentId: string;
+  // Aadhaar number must be unique within the active library.
+  // Stored as a string to preserve leading zeros and ensure exact matching.
+  adharNumber: string;
   name: string;
   email: string;
   phone: string;
+  // Student is active unless soft-deleted.
+  isActive?: boolean;
+  inactiveAt?: Date;
   seatNumber?: number;
   enrollmentDate: Date | any;
   seatStatus: 'occupied' | 'vacant';
+  // Shift IDs selected by the student (multi-select).
+  shiftIds?: string[];
+  // Cached monthly fee based on shift selection (sum of shift fees).
+  monthlyFee?: number;
+  // Address
+  addressLine1?: string;
+  addressLine2?: string;
+  state?: string;
+  city?: string;
+  pincode?: string;
   totalFeePending: number;
+  // For UI: show how much has been collected (paid+waived).
+  totalFeePaid?: number;
   lastFeeDate?: Date;
+  // Optional profile image URL stored in Firebase Storage.
+  photoUrl?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -46,9 +66,56 @@ export class StudentService {
     return true;
   }
 
+  async isAdharNumberTaken(adharNumber: string, excludeStudentId?: string): Promise<boolean> {
+    const normalized = String(adharNumber || '').trim();
+    if (!normalized) return false;
+
+    const matches = await this.firestoreService.list<Student>('students', [
+      { type: 'where', field: 'adharNumber', operator: '==', value: normalized },
+      { type: 'limit', limit: 1 }
+    ]);
+
+    if (!matches.length) return false;
+
+    if (excludeStudentId && (matches[0].studentId === excludeStudentId || matches[0].id === excludeStudentId)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  async findByAdharNumber(adharNumber: string): Promise<Student | null> {
+    const normalized = String(adharNumber || '').trim();
+    if (!/^\d{12}$/.test(normalized)) return null;
+
+    const matches = await this.firestoreService.list<Student>('students', [
+      { type: 'where', field: 'adharNumber', operator: '==', value: normalized },
+      { type: 'limit', limit: 1 }
+    ]);
+    return matches[0] || null;
+  }
+
   async addStudent(student: Omit<Student, 'id' | 'studentId'>): Promise<string> {
     if (!student.seatNumber || student.seatNumber < 1) {
       throw new Error('Please provide a valid seat number.');
+    }
+
+    const adharNormalized = String(student.adharNumber || '').trim();
+    if (!adharNormalized) {
+      throw new Error('Please provide Aadhaar number.');
+    }
+    if (!/^\d{12}$/.test(adharNormalized)) {
+      throw new Error('Aadhaar number must be exactly 12 digits.');
+    }
+
+    const existing = await this.findByAdharNumber(adharNormalized);
+    if (existing) {
+      // If existing is inactive, ask caller to reactivate instead of creating a duplicate.
+      const active = existing.isActive !== false;
+      if (!active) {
+        throw new Error('Aadhaar exists but student is inactive. Reactivate this student instead.');
+      }
+      throw new Error('Aadhaar number already exists. Aadhaar must be unique.');
     }
 
     const totalSeats = this.libraryStateService.currentTotalSeats;
@@ -69,7 +136,9 @@ export class StudentService {
       ...student,
       studentId,
       seatStatus: 'occupied',
-      totalFeePending: 0
+      totalFeePending: 0,
+      adharNumber: adharNormalized,
+      isActive: true
     };
     return this.firestoreService.create('students', studentData, studentId);
   }
@@ -86,11 +155,40 @@ export class StudentService {
       }
     }
 
+    if (typeof data.adharNumber === 'string') {
+      const adharNormalized = String(data.adharNumber).trim();
+      if (!/^\d{12}$/.test(adharNormalized)) {
+        throw new Error('Aadhaar number must be exactly 12 digits.');
+      }
+
+      const adharTaken = await this.isAdharNumberTaken(adharNormalized, studentId);
+      if (adharTaken) {
+        throw new Error('Aadhaar number already exists. Aadhaar must be unique.');
+      }
+
+      data.adharNumber = adharNormalized;
+    }
+
     return this.firestoreService.update('students', studentId, data);
   }
 
   async deleteStudent(studentId: string): Promise<void> {
-    return this.firestoreService.delete('students', studentId);
+    // Soft delete: mark inactive.
+    return this.firestoreService.update('students', studentId, {
+      isActive: false,
+      inactiveAt: new Date(),
+      seatStatus: 'vacant'
+    } as any);
+  }
+
+  async reactivateStudent(studentId: string, data: Partial<Student>): Promise<void> {
+    return this.firestoreService.update('students', studentId, {
+      ...data,
+      isActive: true,
+      inactiveAt: null as any,
+      seatStatus: 'occupied',
+      enrollmentDate: new Date()
+    } as any);
   }
 
   async getStudent(studentId: string): Promise<Student | null> {
@@ -100,6 +198,7 @@ export class StudentService {
   async getAllStudents(pageSize: number = 50): Promise<Student[]> {
     const students = await this.firestoreService.list<Student>('students');
     const studentArray = (students || [])
+      .filter((s) => s.isActive !== false)
       .sort((a, b) => {
         const aTime = a.createdAt ? new Date(a.createdAt as any).getTime() : 0;
         const bTime = b.createdAt ? new Date(b.createdAt as any).getTime() : 0;

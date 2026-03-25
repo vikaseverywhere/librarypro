@@ -12,7 +12,13 @@ service cloud.firestore {
     function belongsToLibrary(libraryId) {
       return isSignedIn()
         && exists(userDoc(request.auth.uid))
-        && get(userDoc(request.auth.uid)).data.libraryId == libraryId;
+        && (
+          get(userDoc(request.auth.uid)).data.libraryId == libraryId
+          || (
+            get(userDoc(request.auth.uid)).data.libraryIds != null
+            && get(userDoc(request.auth.uid)).data.libraryIds.hasAny([libraryId])
+          )
+        );
     }
     
     // Users collection - each user document
@@ -38,7 +44,8 @@ service cloud.firestore {
       // Transactions subcollection
       match /transactions/{transactionId} {
         allow read: if belongsToLibrary(libraryId);
-        allow write: if false; // Only Cloud Functions can write
+        // Spark plan: allow owner to write (no Cloud Functions).
+        allow write: if belongsToLibrary(libraryId);
       }
       
       // Invoices storage (future subcollection)

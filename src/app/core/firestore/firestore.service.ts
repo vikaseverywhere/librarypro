@@ -11,6 +11,21 @@ import { AuthService } from '../auth/auth.service';
 export class FirestoreService {
   private libraryId$ = new BehaviorSubject<string>('');
 
+  private applyConstraints(ref: any, constraints: any[] = []): any {
+    return constraints.reduce((query, constraint) => {
+      if (constraint.type === 'where') {
+        return query.where(constraint.field, constraint.operator, constraint.value);
+      }
+      if (constraint.type === 'orderBy') {
+        return query.orderBy(constraint.field, constraint.direction);
+      }
+      if (constraint.type === 'limit') {
+        return query.limit(constraint.limit);
+      }
+      return query;
+    }, ref);
+  }
+
   constructor(
     private firestore: AngularFirestore,
     private authService: AuthService
@@ -119,19 +134,16 @@ export class FirestoreService {
   ): Promise<T[]> {
     try {
       const libraryId = await this.ensureLibraryId();
-      let query: any = this.firestore.collection(`libraries/${libraryId}/${collectionName}`);
+      const collectionRef = this.firestore.collection(
+        `libraries/${libraryId}/${collectionName}`,
+        (ref) => this.applyConstraints(ref, constraints)
+      );
 
-      constraints.forEach(constraint => {
-        if (constraint.type === 'where') {
-          query = query.where(constraint.field, constraint.operator, constraint.value);
-        } else if (constraint.type === 'orderBy') {
-          query = query.orderBy(constraint.field, constraint.direction);
-        } else if (constraint.type === 'limit') {
-          query = query.limit(constraint.limit);
-        }
-      });
+      const querySnapshot = await collectionRef.get().toPromise();
+      if (!querySnapshot) {
+        return [];
+      }
 
-      const querySnapshot = await query.get().toPromise();
       return querySnapshot.docs.map((doc: any) => ({
         id: doc.id,
         ...doc.data()
@@ -199,34 +211,12 @@ export class FirestoreService {
 
   // Observable methods for real-time data
   getCollectionObservable<T>(collectionName: string, constraints: any[] = []): Observable<T[]> {
-    let query: any = this.firestore.collection(`libraries/${this.libraryId}/${collectionName}`);
+    const collectionRef = this.firestore.collection(
+      `libraries/${this.libraryId}/${collectionName}`,
+      (ref) => this.applyConstraints(ref, constraints)
+    );
 
-    constraints.forEach(constraint => {
-      if (constraint.type === 'where') {
-        query = query.where(constraint.field, constraint.operator, constraint.value);
-      } else if (constraint.type === 'orderBy') {
-        query = query.orderBy(constraint.field, constraint.direction);
-      } else if (constraint.type === 'limit') {
-        query = query.limit(constraint.limit);
-      }
-    });
-
-    return new Observable<T[]>(observer => {
-      const unsubscribe = query.onSnapshot(
-        (snapshot: any) => {
-          const data = snapshot.docs.map((doc: any) => ({
-            id: doc.id,
-            ...doc.data()
-          })) as T[];
-          observer.next(data);
-        },
-        (error: any) => {
-          observer.error(error);
-        }
-      );
-
-      return unsubscribe;
-    });
+    return (collectionRef.valueChanges({ idField: 'id' }) as unknown) as Observable<T[]>;
   }
 
   getDocumentObservable<T>(collectionName: string, docId: string): Observable<T | null> {

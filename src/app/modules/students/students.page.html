@@ -1,10 +1,21 @@
 <ion-page>
-<ion-header >
-  <ion-toolbar>
+  <ion-header>
+    <ion-toolbar class="pro-toolbar">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/dashboard"></ion-back-button>
     </ion-buttons>
-    <ion-title>Students</ion-title>
+      <ion-title>
+        <div class="header-title">
+          <div class="header-main">Students</div>
+          <div class="header-sub">{{ libraryName }}</div>
+        </div>
+      </ion-title>
+      <ion-buttons slot="end" class="header-end">
+        <ion-button fill="clear">
+          <ion-icon name="person-outline" slot="start"></ion-icon>
+          <span class="header-email">{{ userEmail }}</span>
+        </ion-button>
+      </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -61,7 +72,10 @@
       <div *ngIf="!isLoading && filteredStudents.length > 0" class="student-cards">
         <div class="student-card" *ngFor="let student of filteredStudents">
           <div class="student-header">
-            <div class="student-avatar">{{ getInitials(student.name) }}</div>
+            <div class="student-avatar">
+              <img *ngIf="student.photoUrl" [src]="student.photoUrl" alt="{{ student.name }} photo" />
+              <span *ngIf="!student.photoUrl">{{ getInitials(student.name) }}</span>
+            </div>
             <div class="student-info">
               <h3>{{ student.name }}</h3>
               <p class="roll">ID: {{ student.studentId }}</p>
@@ -86,7 +100,11 @@
             </div>
             <div class="detail-item">
               <ion-icon name="pricetag-outline"></ion-icon>
-              <span>₹{{ student.totalFeePending | number: '1.0-0' }}</span>
+              <span>
+                Pending: ₹{{ student.totalFeePending | number: '1.0-0' }}
+                <br/>
+                Paid: ₹{{ (student.totalFeePaid || 0) | number: '1.0-0' }}
+              </span>
             </div>
             <div class="detail-item">
               <ion-icon name="grid-outline"></ion-icon>

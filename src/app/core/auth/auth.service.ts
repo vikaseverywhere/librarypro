@@ -6,10 +6,16 @@ import { BehaviorSubject, Observable } from 'rxjs';
 export interface UserProfile {
   uid: string;
   email: string;
+  // Active library context used by the existing app/services.
   libraryId: string;
   libraryName: string;
+  // All libraries the owner/admin has access to.
+  // Kept optional for backward compatibility with older user documents.
+  libraryIds?: string[];
   city: string;
+  // For now you want Owner fixed as admin.
   role: 'admin' | 'librarian';
+  photoUrl?: string;
 }
 
 @Injectable({
@@ -19,11 +25,15 @@ export class AuthService {
   private currentUser$ = new BehaviorSubject<any | null>(null);
   private userProfile$ = new BehaviorSubject<UserProfile | null>(null);
   private isAuthenticated$ = new BehaviorSubject<boolean>(false);
+  private authResolved$ = new BehaviorSubject<boolean>(false);
 
   constructor(
     private afAuth: AngularFireAuth,
     private firestore: AngularFirestore
   ) {
+    // Keep browser sessions stable across refreshes.
+    // (Prevents the "flash logout/login" feeling on reloads.)
+    void this.afAuth.setPersistence('local').catch(() => {});
     this.initializeAuth();
   }
 
@@ -36,6 +46,11 @@ export class AuthService {
       } else {
         this.userProfile$.next(null);
         this.isAuthenticated$.next(false);
+      }
+
+      // Mark auth status as resolved on first authState emission.
+      if (!this.authResolved$.value) {
+        this.authResolved$.next(true);
       }
     });
   }
@@ -54,7 +69,14 @@ export class AuthService {
     });
   }
 
-  async signup(email: string, password: string, libraryName: string, city: string, totalSeats: number) {
+  async signup(
+    email: string,
+    password: string,
+    libraryName: string,
+    city: string,
+    totalSeats: number,
+    shifts: Array<{ id: string; name: string; monthlyFee: number }> = []
+  ) {
     try {
       const userCredential = await this.afAuth.createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
@@ -70,8 +92,10 @@ export class AuthService {
         email,
         libraryId,
         libraryName,
+        libraryIds: [libraryId],
         city,
-        role: 'admin'
+        role: 'admin',
+        photoUrl: ''
       };
 
       // Save to Firestore
@@ -91,6 +115,8 @@ export class AuthService {
         subscriptionAmount: 0,
         totalSeats,
         seatCount: totalSeats,
+        shifts,
+        photoUrl: '',
         currency: 'INR',
         timezone: 'Asia/Kolkata',
         createdAt: new Date(),
@@ -169,6 +195,10 @@ export class AuthService {
 
   get isAuthenticated(): Observable<boolean> {
     return this.isAuthenticated$.asObservable();
+  }
+
+  get isAuthResolved(): Observable<boolean> {
+    return this.authResolved$.asObservable();
   }
 
   get currentUserValue(): any | null {

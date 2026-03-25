@@ -1,0 +1,65 @@
+<ion-header>
+  <ion-toolbar class="pro-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/dashboard"></ion-back-button>
+    </ion-buttons>
+    <ion-title>
+      <div class="header-title">
+        <div class="header-main">Libraries</div>
+        <div class="header-sub">{{ libraryName }}</div>
+      </div>
+    </ion-title>
+    <ion-buttons slot="end" class="header-end">
+      <ion-button fill="clear">
+        <ion-icon name="person-outline" slot="start"></ion-icon>
+        <span class="header-email">{{ userEmail }}</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div style="padding: 16px;">
+    <ion-button expand="block" (click)="onAddLibrary()">
+      <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+      Add Library
+    </ion-button>
+
+    <ion-list *ngIf="!isLoading">
+      <ion-card *ngFor="let lib of libraries" style="margin-top: 14px;">
+        <ion-card-header>
+          <ion-card-title style="display: flex; align-items: center; gap: 10px;">
+            <span>{{ lib.name }}</span>
+            <ion-badge color="primary" *ngIf="lib.libraryId === activeLibraryId">
+              Active
+            </ion-badge>
+          </ion-card-title>
+          <ion-card-subtitle>{{ lib.city || 'City not set' }}</ion-card-subtitle>
+        </ion-card-header>
+
+        <ion-card-content>
+          <p>Total Seats: <b>{{ getLibrarySeats(lib) }}</b></p>
+          <p>Monthly Fee: <b>₹{{ lib.monthlyFee ?? 0 | number: '1.0-0' }}</b></p>
+
+          <ion-button
+            expand="block"
+            (click)="useLibrary(lib.libraryId)"
+            [disabled]="lib.libraryId === activeLibraryId"
+            style="margin-top: 10px;">
+            Use this library
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-item *ngIf="libraries.length === 0" lines="none" style="margin-top: 16px;">
+        <ion-label>No libraries found.</ion-label>
+      </ion-item>
+    </ion-list>
+
+    <div *ngIf="isLoading" style="text-align: center; margin-top: 40px;">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p style="margin-top: 12px;">Loading libraries...</p>
+    </div>
+  </div>
+</ion-content>
+

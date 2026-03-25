@@ -1,36 +1,74 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StudentService } from '../../../core/firestore/student.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { LibraryStateService } from '../../../core/library-state.service';
+import { ToastController } from '@ionic/angular';
+import { getApp } from 'firebase/app';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { FirestoreService } from '../../../core/firestore/firestore.service';
+import { compressImageToJpeg } from '../../../core/utils/image-compress';
 
 @Component({
   selector: 'app-student-form',
   templateUrl: './student-form.page.html',
   styleUrls: ['./student-form.page.scss']
 })
-export class StudentFormPage implements OnInit {
+export class StudentFormPage implements OnInit, OnDestroy {
   isEditMode = false;
   studentId = '';
   isLoading = false;
   isSaving = false;
   errorMessage = '';
+  photoPreviewUrl: string | null = null;
+  selectedPhotoFile: File | null = null;
+  libraryName = '';
+  userEmail = '';
+  shifts: Array<{ id: string; name: string; monthlyFee: number }> = [];
+  selectedShiftIds: string[] = [];
+  calculatedMonthlyFee = 0;
 
   formData = {
     name: '',
     email: '',
     phone: '',
-    seatNumber: ''
+    seatNumber: '',
+    // Aadhaar must be unique per library.
+    adharNumber: '',
+    addressLine1: '',
+    addressLine2: '',
+    state: '',
+    city: '',
+    pincode: ''
   };
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private studentService: StudentService
+    private studentService: StudentService,
+    private authService: AuthService,
+    private libraryStateService: LibraryStateService,
+    private toastController: ToastController,
+    private firestoreService: FirestoreService
   ) {
     console.log('StudentFormPage constructor called');
   }
 
   async ngOnInit() {
     console.log('StudentFormPage ngOnInit called');
+    this.authService.userProfile.subscribe((profile) => {
+      if (!profile) return;
+      this.libraryName = profile.libraryName || '';
+      this.userEmail = profile.email || '';
+    });
+
+    try {
+      const lib: any = await this.firestoreService.getCurrentLibraryData();
+      this.shifts = Array.isArray(lib?.shifts) ? lib.shifts : [];
+    } catch {
+      this.shifts = [];
+    }
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEditMode = true;
@@ -52,8 +90,18 @@ export class StudentFormPage implements OnInit {
         name: student.name || '',
         email: student.email || '',
         phone: student.phone || '',
-        seatNumber: student.seatNumber ? String(student.seatNumber) : ''
+        seatNumber: student.seatNumber ? String(student.seatNumber) : '',
+        adharNumber: student.adharNumber || '',
+        addressLine1: (student as any).addressLine1 || '',
+        addressLine2: (student as any).addressLine2 || '',
+        state: (student as any).state || '',
+        city: (student as any).city || '',
+        pincode: (student as any).pincode || ''
       };
+
+      this.photoPreviewUrl = student.photoUrl || null;
+      this.selectedShiftIds = Array.isArray((student as any).shiftIds) ? (student as any).shiftIds : [];
+      this.recalculateMonthlyFee();
     } catch (error) {
       console.error('Error loading student:', error);
       this.errorMessage = 'Failed to load student details';
@@ -80,13 +128,27 @@ export class StudentFormPage implements OnInit {
 
   isFormValid(): boolean {
     const seat = Number(this.formData.seatNumber);
-    return !!(this.formData.name && this.formData.email && this.formData.phone && seat >= 1);
+    const adhar = String(this.formData.adharNumber || '').trim();
+    return !!(
+      this.formData.name &&
+      this.formData.email &&
+      this.formData.phone &&
+      this.formData.seatNumber &&
+      Number.isInteger(seat) &&
+      seat >= 1 &&
+      /^\d{12}$/.test(adhar) &&
+      (this.shifts.length === 0 || this.selectedShiftIds.length > 0) &&
+      String(this.formData.addressLine1 || '').trim() &&
+      String(this.formData.state || '').trim() &&
+      String(this.formData.city || '').trim() &&
+      /^\d{6}$/.test(String(this.formData.pincode || '').trim())
+    );
   }
 
   async onSave() {
     console.log('onSave called', this.formData);
     if (!this.isFormValid()) {
-      alert('Please fill all fields');
+      await this.toast('Please fill all fields correctly (Aadhaar: 12 digits).', 'danger');
       return;
     }
     
@@ -96,6 +158,9 @@ export class StudentFormPage implements OnInit {
       return;
     }
 
+    const adharNormalized = String(this.formData.adharNumber || '').trim();
+    this.recalculateMonthlyFee();
+
     this.errorMessage = '';
     this.isSaving = true;
     try {
@@ -104,18 +169,72 @@ export class StudentFormPage implements OnInit {
           name: this.formData.name,
           email: this.formData.email,
           phone: this.formData.phone,
-          seatNumber
+          seatNumber,
+          adharNumber: adharNormalized,
+          shiftIds: this.selectedShiftIds,
+          monthlyFee: this.calculatedMonthlyFee,
+          addressLine1: String(this.formData.addressLine1 || '').trim(),
+          addressLine2: String(this.formData.addressLine2 || '').trim(),
+          state: String(this.formData.state || '').trim(),
+          city: String(this.formData.city || '').trim(),
+          pincode: String(this.formData.pincode || '').trim()
         });
+
+        // Upload photo if selected.
+        if (this.selectedPhotoFile) {
+          const url = await this.uploadStudentPhoto(this.studentId, this.selectedPhotoFile);
+          await this.studentService.updateStudent(this.studentId, { photoUrl: url });
+        }
       } else {
-        await this.studentService.addStudent({
+        const match = await this.studentService.findByAdharNumber(adharNormalized);
+        if (match && match.isActive === false) {
+          await this.studentService.reactivateStudent(match.studentId, {
+            name: this.formData.name,
+            email: this.formData.email,
+            phone: this.formData.phone,
+            seatNumber,
+            adharNumber: adharNormalized,
+            shiftIds: this.selectedShiftIds,
+            monthlyFee: this.calculatedMonthlyFee,
+            addressLine1: String(this.formData.addressLine1 || '').trim(),
+            addressLine2: String(this.formData.addressLine2 || '').trim(),
+            state: String(this.formData.state || '').trim(),
+            city: String(this.formData.city || '').trim(),
+            pincode: String(this.formData.pincode || '').trim()
+          } as any);
+
+          if (this.selectedPhotoFile) {
+            const url = await this.uploadStudentPhoto(match.studentId, this.selectedPhotoFile);
+            await this.studentService.updateStudent(match.studentId, { photoUrl: url } as any);
+          }
+          await this.toast('Student reactivated successfully.', 'success');
+          this.router.navigate(['/students']);
+          return;
+        }
+
+        const newStudentId = await this.studentService.addStudent({
           name: this.formData.name,
           email: this.formData.email,
           phone: this.formData.phone,
           seatNumber,
           enrollmentDate: new Date(),
           totalFeePending: 0,
-          seatStatus: 'occupied'
-        });
+          seatStatus: 'occupied',
+          adharNumber: adharNormalized,
+          shiftIds: this.selectedShiftIds,
+          monthlyFee: this.calculatedMonthlyFee,
+          addressLine1: String(this.formData.addressLine1 || '').trim(),
+          addressLine2: String(this.formData.addressLine2 || '').trim(),
+          state: String(this.formData.state || '').trim(),
+          city: String(this.formData.city || '').trim(),
+          pincode: String(this.formData.pincode || '').trim(),
+          isActive: true
+        } as any);
+
+        if (this.selectedPhotoFile) {
+          const url = await this.uploadStudentPhoto(newStudentId, this.selectedPhotoFile);
+          await this.studentService.updateStudent(newStudentId, { photoUrl: url });
+        }
       }
       console.log('Student saved, navigating back');
       this.router.navigate(['/students']);
@@ -130,5 +249,68 @@ export class StudentFormPage implements OnInit {
   goBack() {
     console.log('goBack called');
     this.router.navigate(['/students']);
+  }
+
+  ngOnDestroy() {
+    if (this.photoPreviewUrl && this.photoPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(this.photoPreviewUrl);
+    }
+  }
+
+  onPhotoSelected(event: any) {
+    const file: File | undefined = event?.target?.files?.[0];
+    if (!file) return;
+
+    this.selectedPhotoFile = file;
+    if (this.photoPreviewUrl && this.photoPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(this.photoPreviewUrl);
+    }
+    this.photoPreviewUrl = URL.createObjectURL(file);
+  }
+
+  private async uploadStudentPhoto(studentId: string, file: File): Promise<string> {
+    const profile = this.authService.currentUserProfileValue;
+    const libraryId = this.libraryStateService.currentLibraryId;
+    if (!profile?.uid) throw new Error('User not authenticated.');
+    if (!libraryId) throw new Error('Library context missing.');
+
+    // Storage path includes uid so simple Storage rules can protect it.
+    const path = `userUploads/${profile.uid}/libraries/${libraryId}/students/${studentId}/photo.jpg`;
+    const app = getApp();
+    const storage = getStorage(app);
+
+    const ref = storageRef(storage, path);
+    const blob = await compressImageToJpeg(file, { maxSizePx: 720, quality: 0.7 });
+    await uploadBytes(ref, blob);
+    return await getDownloadURL(ref);
+  }
+
+  onShiftToggle(shiftId: string, checked: boolean) {
+    if (checked) {
+      if (!this.selectedShiftIds.includes(shiftId)) {
+        this.selectedShiftIds = [...this.selectedShiftIds, shiftId];
+      }
+    } else {
+      this.selectedShiftIds = this.selectedShiftIds.filter((id) => id !== shiftId);
+    }
+    this.recalculateMonthlyFee();
+  }
+
+  private recalculateMonthlyFee() {
+    const byId = new Map(this.shifts.map((s) => [s.id, s]));
+    this.calculatedMonthlyFee = this.selectedShiftIds.reduce((sum, id) => {
+      const s = byId.get(id);
+      return sum + Number(s?.monthlyFee || 0);
+    }, 0);
+  }
+
+  private async toast(message: string, color: 'success' | 'danger') {
+    const t = await this.toastController.create({
+      message,
+      duration: 2400,
+      color,
+      position: 'bottom'
+    });
+    await t.present();
   }
 }

@@ -100,3 +100,61 @@ ion-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
+// App-wide header styling for a more premium look.
+.pro-toolbar {
+  --background: linear-gradient(135deg, rgba(43, 124, 212, 0.95) 0%, rgba(34, 102, 197, 0.95) 100%);
+  --color: #fff;
+  box-shadow: 0 10px 30px rgba(34, 102, 197, 0.18);
+}
+
+.pro-toolbar .header-title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.pro-toolbar .header-main {
+  font-weight: 900;
+  font-size: 1.05rem;
+  color: #ffffff;
+}
+
+.pro-toolbar .header-sub {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+  max-width: 70vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pro-toolbar .header-email {
+  font-size: 0.78rem;
+  font-weight: 700;
+  max-width: 45vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pro-toolbar .toolbar-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 6px 16px rgba(16, 71, 122, 0.22);
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pro-toolbar .toolbar-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

@@ -197,4 +197,8 @@ export class SettingsPage implements OnInit, OnDestroy {
   goBack() {
     this.navController.navigateBack('/dashboard');
   }
+
+  goToLibraries() {
+    this.navController.navigateForward('/libraries');
+  }
 }

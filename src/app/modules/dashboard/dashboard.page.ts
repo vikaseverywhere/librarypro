@@ -5,8 +5,9 @@ import { Subscription, firstValueFrom } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { AuthService } from '../../core/auth/auth.service';
 import { StudentService } from '../../core/firestore/student.service';
-import { FeeService } from '../../core/firestore/fee.service';
+import { FeeStateService } from '../../core/fee-state.service';
 import { LibraryStateService } from '../../core/library-state.service';
+import { FirestoreService } from '../../core/firestore/firestore.service';
 
 interface DashboardStats {
   totalStudents: number;
@@ -25,6 +26,8 @@ interface DashboardStats {
 })
 export class DashboardPage implements OnInit, OnDestroy {
   libraryName = '';
+  ownerPhotoUrl = '';
+  libraryPhotoUrl = '';
   currentDate = new Date();
   stats: DashboardStats = {
     totalStudents: 0,
@@ -41,12 +44,14 @@ export class DashboardPage implements OnInit, OnDestroy {
   isSavingCapacity = false;
 
   private seatsSub?: Subscription;
+  private feeStatsSub?: Subscription;
 
   constructor(
     private authService: AuthService,
     private studentService: StudentService,
-    private feeService: FeeService,
+    private feeStateService: FeeStateService,
     private libraryStateService: LibraryStateService,
+    private firestoreService: FirestoreService,
     private router: Router,
     private alertController: AlertController,
     private navController: NavController,
@@ -60,11 +65,22 @@ export class DashboardPage implements OnInit, OnDestroy {
       this.stats.totalCapacity = totalCapacity;
       this.stats.vacantSeats = Math.max(totalCapacity - this.stats.occupiedSeats, 0);
     });
+
+    this.feeStatsSub = this.feeStateService.feeStats$.subscribe((feeStats) => {
+      this.stats = {
+        ...this.stats,
+        totalFeesPending: feeStats.totalPending,
+        totalFeesOverdue: feeStats.totalOverdue,
+        monthlyRevenue: feeStats.monthlyRevenue
+      };
+    });
+
     this.loadDashboard();
   }
 
   ngOnDestroy() {
     this.seatsSub?.unsubscribe();
+    this.feeStatsSub?.unsubscribe();
   }
 
   ionViewWillEnter() {
@@ -89,12 +105,17 @@ export class DashboardPage implements OnInit, OnDestroy {
       const profile = await this.getCurrentProfile();
       if (profile) {
         this.libraryName = profile.libraryName;
+        this.ownerPhotoUrl = String((profile as any).photoUrl || '');
       }
 
-      const [studentStats, feeStats] = await Promise.all([
-        this.studentService.getStudentStats(),
-        this.feeService.getFeeStats()
-      ]);
+      try {
+        const lib: any = await this.firestoreService.getCurrentLibraryData();
+        this.libraryPhotoUrl = String(lib?.photoUrl || '');
+      } catch {
+        this.libraryPhotoUrl = '';
+      }
+
+      const studentStats = await this.studentService.getStudentStats();
 
       // Use the synchronous snapshot from LibraryStateService
       // (updated in real-time by the subscription above)
@@ -103,9 +124,9 @@ export class DashboardPage implements OnInit, OnDestroy {
 
       this.stats = {
         totalStudents: studentStats.total,
-        totalFeesPending: feeStats.totalPending,
-        totalFeesOverdue: feeStats.totalOverdue,
-        monthlyRevenue: feeStats.monthlyRevenue,
+        totalFeesPending: this.stats.totalFeesPending,
+        totalFeesOverdue: this.stats.totalFeesOverdue,
+        monthlyRevenue: this.stats.monthlyRevenue,
         totalCapacity,
         occupiedSeats: studentStats.occupiedSeats,
         vacantSeats: Math.max(totalCapacity - studentStats.occupiedSeats, 0)
@@ -176,6 +197,14 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   navigateToSettings() {
     this.navController.navigateForward('/settings');
+  }
+
+  navigateToLibraries() {
+    this.navController.navigateForward('/libraries');
+  }
+
+  navigateToReceipts() {
+    this.navController.navigateForward('/transactions');
   }
 
   onQuickAddStudent() {

@@ -1,20 +1,50 @@
 import { Injectable } from '@angular/core';
 import { FirestoreService } from './firestore.service';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
+import { generateReceiptNumber } from '../utils/receipt';
 
 export interface Fee {
   id?: string;
   feeId: string;
   studentId: string;
+  studentDocId?: string;
+  studentName?: string;
   amount: number;
   month: string; // YYYY-MM format
   status: 'pending' | 'paid' | 'overdue' | 'waived';
   dueDate: Date | any;
   paidDate?: Date | any;
+  // Who marked this fee as paid (manual cash / admin action).
+  paidByUid?: string;
+  paidByEmail?: string;
+  receiptNumber?: string;
+  waivedDate?: Date | any;
+  waivedByUid?: string;
+  waivedByEmail?: string;
+  waiveReason?: string;
   invoiceNumber?: string;
   invoiceUrl?: string;
   paymentMethod?: 'razorpay' | 'cash' | 'cheque' | 'waived';
   paymentId?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface Transaction {
+  id?: string;
+  transactionId: string;
+  type: 'fee_paid' | 'fee_waived';
+  feeId: string;
+  studentId: string;
+  studentName?: string;
+  amount: number;
+  month: string;
+  receiptNumber?: string;
+  paymentMethod?: 'cash' | 'waived';
+  actorUid?: string;
+  actorEmail?: string;
+  note?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -25,7 +55,10 @@ export interface Fee {
 export class FeeService {
   private fees$ = new BehaviorSubject<Fee[]>([]);
 
-  constructor(private firestoreService: FirestoreService) {}
+  constructor(
+    private firestoreService: FirestoreService,
+    private authService: AuthService
+  ) {}
 
   async createFee(fee: Omit<Fee, 'id' | 'feeId'>): Promise<string> {
     const feeId = `fee_${Date.now()}`;
@@ -62,12 +95,80 @@ export class FeeService {
     paymentMethod: 'razorpay' | 'cash' | 'cheque',
     paymentId?: string
   ): Promise<void> {
-    return this.firestoreService.update('fees', feeId, {
+    const profile = this.authService.currentUserProfileValue;
+    const fee = await this.getFee(feeId);
+    if (!fee) {
+      throw new Error('Fee record not found.');
+    }
+
+    const receiptNumber = fee.receiptNumber || generateReceiptNumber(new Date());
+    const updateData: Partial<Fee> = {
       status: 'paid',
       paidDate: new Date(),
       paymentMethod,
-      paymentId
-    });
+      paidByUid: profile?.uid,
+      paidByEmail: profile?.email,
+      receiptNumber
+    };
+
+    // Firestore rejects explicit undefined values in update payloads.
+    if (paymentId) {
+      updateData.paymentId = paymentId;
+    }
+
+    await this.firestoreService.update('fees', feeId, updateData);
+
+    // Ledger transaction
+    const transactionId = `txn_${Date.now()}`;
+    await this.firestoreService.create<Transaction>('transactions', {
+      transactionId,
+      type: 'fee_paid',
+      feeId: feeId,
+      studentId: fee.studentId,
+      studentName: fee.studentName,
+      amount: Number(fee.amount || 0),
+      month: String(fee.month || ''),
+      receiptNumber,
+      paymentMethod: 'cash',
+      actorUid: profile?.uid,
+      actorEmail: profile?.email,
+      note: 'Manual cash payment'
+    } as Transaction, transactionId);
+  }
+
+  async waiveFee(feeId: string, reason: string): Promise<void> {
+    const profile = this.authService.currentUserProfileValue;
+    const fee = await this.getFee(feeId);
+    if (!fee) {
+      throw new Error('Fee record not found.');
+    }
+
+    const receiptNumber = fee.receiptNumber || generateReceiptNumber(new Date());
+    await this.firestoreService.update('fees', feeId, {
+      status: 'waived',
+      paymentMethod: 'waived',
+      receiptNumber,
+      waivedDate: new Date(),
+      waivedByUid: profile?.uid,
+      waivedByEmail: profile?.email,
+      waiveReason: String(reason || '').trim()
+    } as Partial<Fee>);
+
+    const transactionId = `txn_${Date.now()}`;
+    await this.firestoreService.create<Transaction>('transactions', {
+      transactionId,
+      type: 'fee_waived',
+      feeId: feeId,
+      studentId: fee.studentId,
+      studentName: fee.studentName,
+      amount: Number(fee.amount || 0),
+      month: String(fee.month || ''),
+      receiptNumber,
+      paymentMethod: 'waived',
+      actorUid: profile?.uid,
+      actorEmail: profile?.email,
+      note: String(reason || '').trim() || 'Waived'
+    } as Transaction, transactionId);
   }
 
   async updateFee(feeId: string, data: Partial<Fee>): Promise<void> {

@@ -24,6 +24,10 @@ import { StudentFormPage } from './modules/students/student-form/student-form.pa
 import { FeesPage } from './modules/fees/fees.page';
 import { CollectFeePage } from './modules/fees/collect-fee/collect-fee.page';
 import { SettingsPage } from './modules/settings/settings.page';
+import { LibrariesPage } from './modules/libraries/libraries.page';
+import { LibraryCreatePage } from './modules/libraries/library-create.page';
+import { TransactionsPage } from './modules/transactions/transactions.page';
+import { ReceiptDetailPage } from './modules/transactions/receipt-detail.page';
 
 const routes: Routes = [
   { path: 'auth', loadChildren: () => import('./modules/auth/auth.module').then(m => m.AuthModule) },
@@ -31,8 +35,12 @@ const routes: Routes = [
   { path: 'students/add',      canActivate: [AuthGuard], component: StudentFormPage },
   { path: 'students/edit/:id', canActivate: [AuthGuard], component: StudentFormPage },
   { path: 'students',          canActivate: [AuthGuard], component: StudentsPage },
+  { path: 'libraries/add',    canActivate: [AuthGuard], component: LibraryCreatePage },
+  { path: 'libraries',        canActivate: [AuthGuard], component: LibrariesPage },
   { path: 'fees/collect',      canActivate: [AuthGuard], component: CollectFeePage },
   { path: 'fees',              canActivate: [AuthGuard], component: FeesPage },
+  { path: 'transactions',      canActivate: [AuthGuard], component: TransactionsPage },
+  { path: 'transactions/:id',  canActivate: [AuthGuard], component: ReceiptDetailPage },
   { path: 'settings',          canActivate: [AuthGuard], component: SettingsPage },
   { path: '',                  redirectTo: 'auth/login', pathMatch: 'full' },
   { path: '**',                redirectTo: 'auth/login' }
@@ -46,7 +54,11 @@ const routes: Routes = [
     StudentFormPage,
     FeesPage,
     CollectFeePage,
-    SettingsPage
+    SettingsPage,
+    LibrariesPage,
+    LibraryCreatePage,
+    TransactionsPage,
+    ReceiptDetailPage
   ],
   imports: [
     BrowserModule,

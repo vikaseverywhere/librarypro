@@ -51,6 +51,34 @@
             [class.ion-invalid]="totalSeats?.invalid && totalSeats?.touched"
           ></ion-input>
         </ion-item>
+        <ion-item>
+          <ion-label position="floating">How many shifts?</ion-label>
+          <ion-input type="number" formControlName="shiftCount" min="1" max="4"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Shift 1 Monthly Fee (₹)</ion-label>
+          <ion-input type="number" formControlName="shift1Fee" min="0"></ion-input>
+        </ion-item>
+
+        <ion-item *ngIf="signupForm.get('shiftCount')?.value >= 2">
+          <ion-label position="floating">Shift 2 Monthly Fee (₹)</ion-label>
+          <ion-input type="number" formControlName="shift2Fee" min="0"></ion-input>
+        </ion-item>
+
+        <div style="margin: 0.6rem 0 0.2rem; font-weight: 700; color: #1e3a5f;">
+          Photos (optional)
+        </div>
+        <div style="display:flex; flex-direction:column; gap:0.6rem; margin-bottom: 0.5rem;">
+          <div>
+            <small style="color:#637898; font-weight:700;">Owner Photo</small>
+            <input type="file" accept="image/*" (change)="onOwnerPhotoSelected($event)" />
+          </div>
+          <div>
+            <small style="color:#637898; font-weight:700;">Library Photo</small>
+            <input type="file" accept="image/*" (change)="onLibraryPhotoSelected($event)" />
+          </div>
+        </div>
         <ion-text *ngIf="totalSeats?.invalid && totalSeats?.touched" color="danger" class="inline-error">
           <small *ngIf="totalSeats?.errors?.['required']">Total seats is required</small>
           <small *ngIf="totalSeats?.errors?.['min']">Total seats must be at least 1</small>
