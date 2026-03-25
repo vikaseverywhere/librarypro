@@ -116,24 +116,29 @@ export class FeeService {
       updateData.paymentId = paymentId;
     }
 
+    // Update fee first; even if ledger fails, payment should still succeed.
     await this.firestoreService.update('fees', feeId, updateData);
 
-    // Ledger transaction
-    const transactionId = `txn_${Date.now()}`;
-    await this.firestoreService.create<Transaction>('transactions', {
-      transactionId,
-      type: 'fee_paid',
-      feeId: feeId,
-      studentId: fee.studentId,
-      studentName: fee.studentName,
-      amount: Number(fee.amount || 0),
-      month: String(fee.month || ''),
-      receiptNumber,
-      paymentMethod: 'cash',
-      actorUid: profile?.uid,
-      actorEmail: profile?.email,
-      note: 'Manual cash payment'
-    } as Transaction, transactionId);
+    try {
+      // Ledger transaction
+      const transactionId = `txn_${Date.now()}`;
+      await this.firestoreService.create<Transaction>('transactions', {
+        transactionId,
+        type: 'fee_paid',
+        feeId: feeId,
+        studentId: fee.studentId,
+        studentName: fee.studentName,
+        amount: Number(fee.amount || 0),
+        month: String(fee.month || ''),
+        receiptNumber,
+        paymentMethod: 'cash',
+        actorUid: profile?.uid,
+        actorEmail: profile?.email,
+        note: 'Manual cash payment'
+      } as Transaction, transactionId);
+    } catch (e) {
+      console.warn('Ledger write failed (payment still OK):', e);
+    }
   }
 
   async waiveFee(feeId: string, reason: string): Promise<void> {
@@ -154,21 +159,25 @@ export class FeeService {
       waiveReason: String(reason || '').trim()
     } as Partial<Fee>);
 
-    const transactionId = `txn_${Date.now()}`;
-    await this.firestoreService.create<Transaction>('transactions', {
-      transactionId,
-      type: 'fee_waived',
-      feeId: feeId,
-      studentId: fee.studentId,
-      studentName: fee.studentName,
-      amount: Number(fee.amount || 0),
-      month: String(fee.month || ''),
-      receiptNumber,
-      paymentMethod: 'waived',
-      actorUid: profile?.uid,
-      actorEmail: profile?.email,
-      note: String(reason || '').trim() || 'Waived'
-    } as Transaction, transactionId);
+    try {
+      const transactionId = `txn_${Date.now()}`;
+      await this.firestoreService.create<Transaction>('transactions', {
+        transactionId,
+        type: 'fee_waived',
+        feeId: feeId,
+        studentId: fee.studentId,
+        studentName: fee.studentName,
+        amount: Number(fee.amount || 0),
+        month: String(fee.month || ''),
+        receiptNumber,
+        paymentMethod: 'waived',
+        actorUid: profile?.uid,
+        actorEmail: profile?.email,
+        note: String(reason || '').trim() || 'Waived'
+      } as Transaction, transactionId);
+    } catch (e) {
+      console.warn('Ledger write failed (waive still OK):', e);
+    }
   }
 
   async updateFee(feeId: string, data: Partial<Fee>): Promise<void> {

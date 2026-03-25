@@ -10,7 +10,11 @@
 <ion-content >
   <div class="settings-header">
     <div class="profile-section">
-      <div class="profile-avatar">{{ getInitials(libraryName) }}</div>
+      <div class="profile-avatar">
+        <img *ngIf="libraryPhotoUrl" [src]="libraryPhotoUrl" alt="Library photo" />
+        <img *ngIf="!libraryPhotoUrl && ownerPhotoUrl" [src]="ownerPhotoUrl" alt="Owner photo" />
+        <span *ngIf="!libraryPhotoUrl && !ownerPhotoUrl">{{ getInitials(libraryName) }}</span>
+      </div>
       <h1>{{ libraryName }}</h1>
       <p class="profile-subtitle">Library Administrator</p>
     </div>

@@ -28,12 +28,14 @@ import { LibrariesPage } from './modules/libraries/libraries.page';
 import { LibraryCreatePage } from './modules/libraries/library-create.page';
 import { TransactionsPage } from './modules/transactions/transactions.page';
 import { ReceiptDetailPage } from './modules/transactions/receipt-detail.page';
+import { StudentProfilePage } from './modules/students/student-profile/student-profile.page';
 
 const routes: Routes = [
   { path: 'auth', loadChildren: () => import('./modules/auth/auth.module').then(m => m.AuthModule) },
   { path: 'dashboard',         canActivate: [AuthGuard], component: DashboardPage },
   { path: 'students/add',      canActivate: [AuthGuard], component: StudentFormPage },
   { path: 'students/edit/:id', canActivate: [AuthGuard], component: StudentFormPage },
+  { path: 'students/profile/:id', canActivate: [AuthGuard], component: StudentProfilePage },
   { path: 'students',          canActivate: [AuthGuard], component: StudentsPage },
   { path: 'libraries/add',    canActivate: [AuthGuard], component: LibraryCreatePage },
   { path: 'libraries',        canActivate: [AuthGuard], component: LibrariesPage },
@@ -58,7 +60,8 @@ const routes: Routes = [
     LibrariesPage,
     LibraryCreatePage,
     TransactionsPage,
-    ReceiptDetailPage
+    ReceiptDetailPage,
+    StudentProfilePage
   ],
   imports: [
     BrowserModule,

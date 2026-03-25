@@ -158,3 +158,48 @@ ion-card {
   object-fit: cover;
   display: block;
 }
+
+.pro-toolbar .toolbar-brand {
+  --background: transparent;
+  padding: 0;
+  margin-right: 10px;
+}
+
+.pro-toolbar .toolbar-brand-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pro-toolbar .toolbar-brand-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.pro-toolbar .toolbar-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+  text-align: left;
+}
+
+.pro-toolbar .toolbar-brand-text .brand-main {
+  font-weight: 900;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.pro-toolbar .toolbar-brand-text .brand-sub {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+}

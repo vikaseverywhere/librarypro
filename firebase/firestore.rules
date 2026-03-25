@@ -28,8 +28,12 @@ service cloud.firestore {
     
     // Libraries collection with subcollections
     match /libraries/{libraryId} {
-      // Only library owner can read/write library settings
-      allow read, write: if belongsToLibrary(libraryId);
+      // Owner can always read/write their own libraries via `ownerUid`,
+      // and also via membership (libraryIds/libraryId) for extra safety.
+      allow read: if belongsToLibrary(libraryId)
+        || (resource.data.ownerUid == request.auth.uid);
+      allow write: if belongsToLibrary(libraryId)
+        || (request.auth.uid == request.resource.data.ownerUid);
       
       // Students subcollection
       match /students/{studentId} {

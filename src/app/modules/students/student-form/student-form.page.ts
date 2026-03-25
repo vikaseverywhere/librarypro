@@ -4,7 +4,6 @@ import { StudentService } from '../../../core/firestore/student.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LibraryStateService } from '../../../core/library-state.service';
 import { ToastController } from '@ionic/angular';
-import { getApp } from 'firebase/app';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FirestoreService } from '../../../core/firestore/firestore.service';
 import { compressImageToJpeg } from '../../../core/utils/image-compress';
@@ -30,6 +29,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
 
   formData = {
     name: '',
+    fatherName: '',
     email: '',
     phone: '',
     seatNumber: '',
@@ -37,10 +37,13 @@ export class StudentFormPage implements OnInit, OnDestroy {
     adharNumber: '',
     addressLine1: '',
     addressLine2: '',
-    state: '',
     city: '',
+    state: '',
     pincode: ''
   };
+
+  private pincodeResolution: { city: string; state: string } | null = null;
+  private isPincodeResolving = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -88,14 +91,15 @@ export class StudentFormPage implements OnInit, OnDestroy {
 
       this.formData = {
         name: student.name || '',
+        fatherName: (student as any).fatherName || '',
         email: student.email || '',
         phone: student.phone || '',
         seatNumber: student.seatNumber ? String(student.seatNumber) : '',
         adharNumber: student.adharNumber || '',
         addressLine1: (student as any).addressLine1 || '',
         addressLine2: (student as any).addressLine2 || '',
-        state: (student as any).state || '',
         city: (student as any).city || '',
+        state: (student as any).state || '',
         pincode: (student as any).pincode || ''
       };
 
@@ -129,27 +133,90 @@ export class StudentFormPage implements OnInit, OnDestroy {
   isFormValid(): boolean {
     const seat = Number(this.formData.seatNumber);
     const adhar = String(this.formData.adharNumber || '').trim();
+    const phone = String(this.formData.phone || '').trim();
     return !!(
       this.formData.name &&
+      this.formData.fatherName &&
       this.formData.email &&
       this.formData.phone &&
+      /^\d{10}$/.test(phone) &&
       this.formData.seatNumber &&
       Number.isInteger(seat) &&
       seat >= 1 &&
       /^\d{12}$/.test(adhar) &&
       (this.shifts.length === 0 || this.selectedShiftIds.length > 0) &&
-      String(this.formData.addressLine1 || '').trim() &&
-      String(this.formData.state || '').trim() &&
       String(this.formData.city || '').trim() &&
+      String(this.formData.state || '').trim() &&
+      String(this.formData.addressLine2 || '').trim() &&
       /^\d{6}$/.test(String(this.formData.pincode || '').trim())
     );
   }
 
+  private normalizeForCompare(value: string): string {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '');
+  }
+
+  private async resolvePincode(): Promise<void> {
+    const pin = String(this.formData.pincode || '').trim();
+    if (!/^\d{6}$/.test(pin)) {
+      this.pincodeResolution = null;
+      return;
+    }
+
+    if (this.isPincodeResolving) return;
+    this.isPincodeResolving = true;
+
+    try {
+      const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+      const data: any[] = await res.json();
+      const first = data?.[0];
+      if (first?.Status !== 'Success' || !first?.PostOffice?.length) {
+        this.pincodeResolution = null;
+        return;
+      }
+      const po = first.PostOffice[0];
+      const city = po?.District || '';
+      const state = po?.State || '';
+      if (!city || !state) {
+        this.pincodeResolution = null;
+        return;
+      }
+      this.pincodeResolution = { city, state };
+      // Auto-fill city/state from pincode result.
+      this.formData.city = String(city);
+      this.formData.state = String(state);
+    } catch {
+      this.pincodeResolution = null;
+    } finally {
+      this.isPincodeResolving = false;
+    }
+  }
+
+  async onPincodeBlur() {
+    // Auto-fill city/state from pincode.
+    await this.resolvePincode();
+  }
+
   async onSave() {
     console.log('onSave called', this.formData);
+    // Auto-resolve pincode -> city/state for strict validation.
+    await this.resolvePincode();
+
     if (!this.isFormValid()) {
-      await this.toast('Please fill all fields correctly (Aadhaar: 12 digits).', 'danger');
+      await this.toast('Please fill all fields correctly. Phone: 10 digits, Aadhaar: 12 digits, Pincode: 6 digits.', 'danger');
       return;
+    }
+
+    if (this.pincodeResolution) {
+      const cityOk = this.normalizeForCompare(this.formData.city) === this.normalizeForCompare(this.pincodeResolution.city);
+      const stateOk = this.normalizeForCompare(this.formData.state) === this.normalizeForCompare(this.pincodeResolution.state);
+      if (!cityOk || !stateOk) {
+        await this.toast('Pincode does not match City/State. Please update City/State as per Pincode.', 'danger');
+        return;
+      }
     }
     
     const seatNumber = Number(this.formData.seatNumber);
@@ -167,6 +234,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
       if (this.isEditMode && this.studentId) {
         await this.studentService.updateStudent(this.studentId, {
           name: this.formData.name,
+          fatherName: this.formData.fatherName,
           email: this.formData.email,
           phone: this.formData.phone,
           seatNumber,
@@ -175,8 +243,8 @@ export class StudentFormPage implements OnInit, OnDestroy {
           monthlyFee: this.calculatedMonthlyFee,
           addressLine1: String(this.formData.addressLine1 || '').trim(),
           addressLine2: String(this.formData.addressLine2 || '').trim(),
-          state: String(this.formData.state || '').trim(),
           city: String(this.formData.city || '').trim(),
+          state: String(this.formData.state || '').trim(),
           pincode: String(this.formData.pincode || '').trim()
         });
 
@@ -190,6 +258,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
         if (match && match.isActive === false) {
           await this.studentService.reactivateStudent(match.studentId, {
             name: this.formData.name,
+            fatherName: this.formData.fatherName,
             email: this.formData.email,
             phone: this.formData.phone,
             seatNumber,
@@ -198,8 +267,8 @@ export class StudentFormPage implements OnInit, OnDestroy {
             monthlyFee: this.calculatedMonthlyFee,
             addressLine1: String(this.formData.addressLine1 || '').trim(),
             addressLine2: String(this.formData.addressLine2 || '').trim(),
-            state: String(this.formData.state || '').trim(),
             city: String(this.formData.city || '').trim(),
+            state: String(this.formData.state || '').trim(),
             pincode: String(this.formData.pincode || '').trim()
           } as any);
 
@@ -214,6 +283,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
 
         const newStudentId = await this.studentService.addStudent({
           name: this.formData.name,
+            fatherName: this.formData.fatherName,
           email: this.formData.email,
           phone: this.formData.phone,
           seatNumber,
@@ -225,8 +295,8 @@ export class StudentFormPage implements OnInit, OnDestroy {
           monthlyFee: this.calculatedMonthlyFee,
           addressLine1: String(this.formData.addressLine1 || '').trim(),
           addressLine2: String(this.formData.addressLine2 || '').trim(),
-          state: String(this.formData.state || '').trim(),
           city: String(this.formData.city || '').trim(),
+            state: String(this.formData.state || '').trim(),
           pincode: String(this.formData.pincode || '').trim(),
           isActive: true
         } as any);
@@ -276,8 +346,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
 
     // Storage path includes uid so simple Storage rules can protect it.
     const path = `userUploads/${profile.uid}/libraries/${libraryId}/students/${studentId}/photo.jpg`;
-    const app = getApp();
-    const storage = getStorage(app);
+    const storage = getStorage();
 
     const ref = storageRef(storage, path);
     const blob = await compressImageToJpeg(file, { maxSizePx: 720, quality: 0.7 });

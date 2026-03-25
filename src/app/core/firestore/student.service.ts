@@ -10,6 +10,7 @@ export interface Student {
   // Stored as a string to preserve leading zeros and ensure exact matching.
   adharNumber: string;
   name: string;
+  fatherName?: string;
   email: string;
   phone: string;
   // Student is active unless soft-deleted.
@@ -50,20 +51,21 @@ export class StudentService {
   ) {}
 
   async isSeatNumberTaken(seatNumber: number, excludeStudentId?: string): Promise<boolean> {
+    // Note: seatNumber uniqueness is enforced only for ACTIVE students.
+    // We query a small page and then ignore inactive students client-side.
     const matches = await this.firestoreService.list<Student>('students', [
       { type: 'where', field: 'seatNumber', operator: '==', value: seatNumber },
-      { type: 'limit', limit: 1 }
+      { type: 'limit', limit: 10 }
     ]);
 
-    if (!matches.length) {
-      return false;
-    }
+    const activeConflicts = matches.filter((s) => s.isActive !== false);
+    if (!activeConflicts.length) return false;
 
-    if (excludeStudentId && matches[0].studentId === excludeStudentId) {
-      return false;
-    }
+    const conflict = excludeStudentId
+      ? activeConflicts.find((s) => s.studentId !== excludeStudentId && s.id !== excludeStudentId)
+      : activeConflicts[0];
 
-    return true;
+    return !!conflict;
   }
 
   async isAdharNumberTaken(adharNumber: string, excludeStudentId?: string): Promise<boolean> {
@@ -177,11 +179,19 @@ export class StudentService {
     return this.firestoreService.update('students', studentId, {
       isActive: false,
       inactiveAt: new Date(),
-      seatStatus: 'vacant'
+      seatStatus: 'vacant',
+      // Free the seat: removing seatNumber prevents seat validation conflicts.
+      seatNumber: null as any
     } as any);
   }
 
   async reactivateStudent(studentId: string, data: Partial<Student>): Promise<void> {
+    if (typeof data.seatNumber === 'number' && data.seatNumber >= 1) {
+      const taken = await this.isSeatNumberTaken(data.seatNumber, studentId);
+      if (taken) {
+        throw new Error(`Seat ${data.seatNumber} is already assigned to another student.`);
+      }
+    }
     return this.firestoreService.update('students', studentId, {
       ...data,
       isActive: true,
@@ -207,6 +217,18 @@ export class StudentService {
       .slice(0, pageSize);
     this.students$.next(studentArray);
     return studentArray;
+  }
+
+  async getInactiveStudents(pageSize: number = 200): Promise<Student[]> {
+    const students = await this.firestoreService.list<Student>('students');
+    return (students || [])
+      .filter((s) => s.isActive === false)
+      .sort((a, b) => {
+        const aTime = a.updatedAt ? new Date(a.updatedAt as any).getTime() : 0;
+        const bTime = b.updatedAt ? new Date(b.updatedAt as any).getTime() : 0;
+        return bTime - aTime;
+      })
+      .slice(0, pageSize);
   }
 
   async searchStudents(searchTerm: string): Promise<Student[]> {

@@ -3,7 +3,6 @@ import { NavController, ToastController } from '@ionic/angular';
 import { LibraryService } from '../../core/firestore/library.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { getApp } from 'firebase/app';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { compressImageToJpeg } from '../../core/utils/image-compress';
 
@@ -20,6 +19,8 @@ export class LibraryCreatePage implements OnInit {
   shiftCount: number = 2;
   shift1Fee: number = 2500;
   shift2Fee: number = 2500;
+  shift3Fee: number = 2500;
+  shift4Fee: number = 2500;
   libraryPhotoFile: File | null = null;
   isSaving = false;
 
@@ -38,13 +39,13 @@ export class LibraryCreatePage implements OnInit {
     const c = this.city.trim();
     const seats = Number(this.totalSeats);
     const fee = Number(this.monthlyFee);
-    const count = Number(this.shiftCount) || 1;
+    const count = Math.max(1, Number(this.shiftCount) || 1);
     const shifts: Array<{ id: string; name: string; monthlyFee: number }> = [
       { id: 's1', name: 'Shift 1', monthlyFee: Number(this.shift1Fee) || 0 }
     ];
-    if (count >= 2) {
-      shifts.push({ id: 's2', name: 'Shift 2', monthlyFee: Number(this.shift2Fee) || 0 });
-    }
+    if (count >= 2) shifts.push({ id: 's2', name: 'Shift 2', monthlyFee: Number(this.shift2Fee) || 0 });
+    if (count >= 3) shifts.push({ id: 's3', name: 'Shift 3', monthlyFee: Number(this.shift3Fee) || 0 });
+    if (count >= 4) shifts.push({ id: 's4', name: 'Shift 4', monthlyFee: Number(this.shift4Fee) || 0 });
 
     if (!n) {
       await this.toast('Please enter library name.', 'danger');
@@ -78,8 +79,7 @@ export class LibraryCreatePage implements OnInit {
         const profile = this.authService.currentUserProfileValue;
         const uid = profile?.uid;
         if (uid) {
-          const app = getApp();
-          const storage = getStorage(app);
+          const storage = getStorage();
           const blob = await compressImageToJpeg(this.libraryPhotoFile, { maxSizePx: 900, quality: 0.72 });
           const ref = storageRef(storage, `userUploads/${uid}/libraries/${libraryId}/library.jpg`);
           await uploadBytes(ref, blob);

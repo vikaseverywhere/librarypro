@@ -1,0 +1,106 @@
+<ion-header>
+  <ion-toolbar class="pro-toolbar">
+    <ion-buttons slot="start">
+        <ion-button fill="clear" [routerLink]="['/dashboard']" class="toolbar-brand">
+          <div class="toolbar-brand-content">
+            <div class="toolbar-brand-circle">LP</div>
+            <div class="toolbar-brand-text">
+              <div class="brand-main">LibraryPro</div>
+              <div class="brand-sub">Home</div>
+            </div>
+          </div>
+        </ion-button>
+      <ion-back-button defaultHref="/students"></ion-back-button>
+    </ion-buttons>
+    <ion-title>
+      <div class="header-title">
+        <div class="header-main">Student Profile</div>
+        <div class="header-sub">{{ student?.name || studentId }}</div>
+      </div>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div style="padding: 16px;">
+    <div *ngIf="isLoading" style="text-align:center; margin-top:30px;">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p style="margin-top:12px;">Loading profile...</p>
+    </div>
+
+    <div *ngIf="!isLoading && student">
+      <ion-card>
+        <ion-card-content>
+          <div style="display:flex; gap:12px; align-items:center;">
+            <div class="profile-avatar">
+              <img *ngIf="student.photoUrl" [src]="student.photoUrl" alt="student photo" />
+              <span *ngIf="!student.photoUrl">{{ getInitials(student.name) }}</span>
+            </div>
+            <div>
+              <div style="font-weight:900; color:#1e3a5f; font-size:1.1rem;">{{ student.name }}</div>
+              <div style="color:#637898; font-weight:700;" *ngIf="student?.fatherName">Father: {{ student.fatherName }}</div>
+              <div style="color:#637898; font-weight:700;">ID: {{ student.studentId }}</div>
+              <div style="color:#637898; font-weight:700;">Aadhaar: {{ student.adharNumber }}</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px; color:#637898; font-weight:700;">
+            {{ student.phone }} • {{ student.email }}
+          </div>
+          <div style="margin-top: 8px; color:#1e3a5f; font-weight:700;">
+            Seat: {{ student.seatNumber || 'Not assigned' }} • Monthly Fee: ₹{{ (student.monthlyFee || 0) | number:'1.0-0' }}
+          </div>
+          <div style="margin-top: 8px; color:#1e3a5f;">
+            {{ student.addressLine1 }} {{ student.addressLine2 }}<br />
+            {{ student.city }}, {{ student.state }} - {{ student.pincode }}
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Fee History</ion-card-title>
+        </ion-card-header>
+        <ion-list>
+          <ion-item *ngIf="fees.length === 0" lines="none">
+            <ion-label>No fee records.</ion-label>
+          </ion-item>
+          <ion-item *ngFor="let f of fees">
+            <ion-label>
+              <div style="display:flex; justify-content:space-between; gap:10px;">
+                <b>{{ f.month }}</b>
+                <ion-badge [color]="f.status === 'paid' ? 'success' : (f.status === 'waived' ? 'warning' : 'danger')">
+                  {{ f.status | titlecase }}
+                </ion-badge>
+              </div>
+              <div style="margin-top:4px;">₹{{ f.amount | number:'1.0-0' }} • Due: {{ f.dueDate | date:'MMM d, y' }}</div>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card>
+
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Receipts</ion-card-title>
+        </ion-card-header>
+        <ion-list>
+          <ion-item *ngIf="receipts.length === 0" lines="none">
+            <ion-label>No receipts.</ion-label>
+          </ion-item>
+          <ion-item *ngFor="let t of receipts">
+            <ion-label>
+              <div style="display:flex; justify-content:space-between; gap:10px;">
+                <b>{{ t.receiptNumber || t.transactionId }}</b>
+                <ion-badge [color]="t.type === 'fee_paid' ? 'success' : 'warning'">
+                  {{ t.type === 'fee_paid' ? 'Paid' : 'Waived' }}
+                </ion-badge>
+              </div>
+              <div style="margin-top:4px;">₹{{ t.amount | number:'1.0-0' }} • {{ t.month }}</div>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </ion-card>
+    </div>
+  </div>
+</ion-content>
+

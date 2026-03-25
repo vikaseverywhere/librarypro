@@ -3,7 +3,6 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../core/auth/auth.service';
-import { getApp } from 'firebase/app';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { compressImageToJpeg } from '../../core/utils/image-compress';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
@@ -40,6 +39,8 @@ export class SignupPage implements OnInit {
       shiftCount: [2, [Validators.required, Validators.min(1), Validators.max(4)]],
       shift1Fee: [2500, [Validators.required, Validators.min(0)]],
       shift2Fee: [2500, [Validators.required, Validators.min(0)]],
+      shift3Fee: [2500, [Validators.required, Validators.min(0)]],
+      shift4Fee: [2500, [Validators.required, Validators.min(0)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]]
@@ -75,12 +76,12 @@ export class SignupPage implements OnInit {
     try {
       const { email, password, libraryName, city, totalSeats, shiftCount, shift1Fee, shift2Fee } = this.signupForm.value;
 
-      const shifts = [];
-      const count = Number(shiftCount) || 1;
+      const shifts: Array<{ id: string; name: string; monthlyFee: number }> = [];
+      const count = Math.max(1, Number(shiftCount) || 1);
       shifts.push({ id: 's1', name: 'Shift 1', monthlyFee: Number(shift1Fee) || 0 });
-      if (count >= 2) {
-        shifts.push({ id: 's2', name: 'Shift 2', monthlyFee: Number(shift2Fee) || 0 });
-      }
+      if (count >= 2) shifts.push({ id: 's2', name: 'Shift 2', monthlyFee: Number(shift2Fee) || 0 });
+      if (count >= 3) shifts.push({ id: 's3', name: 'Shift 3', monthlyFee: Number((this.signupForm.value as any).shift3Fee) || 0 });
+      if (count >= 4) shifts.push({ id: 's4', name: 'Shift 4', monthlyFee: Number((this.signupForm.value as any).shift4Fee) || 0 });
 
       const profile = await this.authService.signup(
         email,
@@ -94,8 +95,7 @@ export class SignupPage implements OnInit {
       // Upload optional photos (compressed) and store URLs.
       const libraryId = profile.libraryId;
       const uid = profile.uid;
-      const app = getApp();
-      const storage = getStorage(app);
+      const storage = getStorage();
 
       if (this.ownerPhotoFile) {
         const blob = await compressImageToJpeg(this.ownerPhotoFile, { maxSizePx: 720, quality: 0.7 });

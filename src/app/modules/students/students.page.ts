@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AlertController } from '@ionic/angular';
+import { AlertController, ToastController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { StudentService, Student } from '../../core/firestore/student.service';
 import { FeeStateService } from '../../core/fee-state.service';
@@ -13,9 +13,11 @@ import { AuthService, UserProfile } from '../../core/auth/auth.service';
 })
 export class StudentsPage implements OnInit {
   students: Student[] = [];
+  inactiveStudents: Student[] = [];
   filteredStudents: Student[] = [];
   isLoading = false;
   searchTerm = '';
+  viewMode: 'active' | 'inactive' = 'active';
   private rawStudents: Student[] = [];
   private pendingAmounts: Record<string, number> = {};
   private paidAmounts: Record<string, number> = {};
@@ -29,6 +31,7 @@ export class StudentsPage implements OnInit {
     private router: Router,
     private studentService: StudentService,
     private alertController: AlertController,
+    private toastController: ToastController,
     private feeStateService: FeeStateService,
     private authService: AuthService
   ) {}
@@ -65,6 +68,7 @@ export class StudentsPage implements OnInit {
     this.isLoading = true;
     try {
       this.rawStudents = await this.studentService.getAllStudents();
+      this.inactiveStudents = await this.studentService.getInactiveStudents();
       this.applyFeeAmounts();
     } catch (error) {
       console.error('Error loading students:', error);
@@ -97,8 +101,9 @@ export class StudentsPage implements OnInit {
   }
 
   onSearchChange() {
+    const source = this.viewMode === 'active' ? this.students : this.inactiveStudents;
     if (this.searchTerm.trim()) {
-      this.filteredStudents = this.students.filter(student =>
+      this.filteredStudents = source.filter(student =>
         student.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         student.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         student.phone.includes(this.searchTerm) ||
@@ -106,8 +111,13 @@ export class StudentsPage implements OnInit {
         String(student.seatNumber || '').includes(this.searchTerm)
       );
     } else {
-      this.filteredStudents = [...this.students];
+      this.filteredStudents = [...source];
     }
+  }
+
+  onViewModeChange(mode: unknown) {
+    this.viewMode = String(mode) === 'inactive' ? 'inactive' : 'active';
+    this.onSearchChange();
   }
 
   onAddStudent() {
@@ -139,6 +149,71 @@ export class StudentsPage implements OnInit {
       ]
     });
     await alert.present();
+  }
+
+  async onReactivateStudent(student: Student) {
+    const alert = await this.alertController.create({
+      header: 'Reactivate Student',
+      message: `Assign a seat number to reactivate ${student.name}.`,
+      inputs: [
+        {
+          name: 'seatNumber',
+          type: 'number',
+          placeholder: 'Seat number',
+          min: 1
+        }
+      ],
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Reactivate',
+          handler: async (data: any) => {
+            const seatNumber = Number(data?.seatNumber);
+            if (!Number.isInteger(seatNumber) || seatNumber < 1) {
+              await this.studentService.reactivateStudent(student.studentId, {} as any);
+              return;
+            }
+
+            try {
+              await this.studentService.reactivateStudent(student.studentId, {
+                name: student.name,
+                fatherName: (student as any).fatherName || '',
+                email: student.email,
+                phone: student.phone,
+                adharNumber: student.adharNumber,
+                seatNumber,
+                seatStatus: 'occupied',
+                shiftIds: (student as any).shiftIds || [],
+                monthlyFee: (student as any).monthlyFee || 0,
+                addressLine1: (student as any).addressLine1 || '',
+                addressLine2: (student as any).addressLine2 || '',
+                state: (student as any).state || '',
+                city: (student as any).city || '',
+                pincode: (student as any).pincode || ''
+              } as any);
+            } catch (e: any) {
+              const msg = e?.message || 'Failed to reactivate student.';
+              const t = await this.toastController.create({
+                message: msg,
+                duration: 2600,
+                color: 'danger',
+                position: 'bottom'
+              });
+              await t.present();
+              return;
+            }
+
+            await this.loadStudents();
+            this.onViewModeChange('inactive');
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  onOpenStudentProfile(student: Student) {
+    this.router.navigate(['/students/profile', student.studentId]);
   }
 
   getInitials(name: string): string {

@@ -298,6 +298,23 @@ export class TransactionsPage implements OnInit, OnDestroy {
     return (this.filteredTxns || []).reduce((sum, t) => sum + Number(t.amount || 0), 0);
   }
 
+  getTodayCount(): number {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const d = today.getDate();
+    return (this.filteredTxns || []).filter((t: any) => {
+      const createdAt = t?.createdAt ? new Date(t.createdAt as any) : null;
+      return createdAt && createdAt.getFullYear() === y && createdAt.getMonth() === m && createdAt.getDate() === d;
+    }).length;
+  }
+
+  getThisMonthCount(): number {
+    const today = new Date();
+    const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    return (this.filteredTxns || []).filter((t) => String(t.month || '') === key).length;
+  }
+
   private async toast(message: string, color: 'success' | 'danger' = 'success') {
     const t = await this.toastController.create({
       message,

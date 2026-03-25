@@ -13,6 +13,8 @@ import { LibraryStateService } from '../../core/library-state.service';
 })
 export class SettingsPage implements OnInit, OnDestroy {
   libraryName = '';
+  ownerPhotoUrl = '';
+  libraryPhotoUrl = '';
   city = '';
   totalSeats = 50;
   monthlyFee = 5000;
@@ -56,11 +58,13 @@ export class SettingsPage implements OnInit, OnDestroy {
       this.libraryName = this.userProfile.libraryName;
       this.city = this.userProfile.city || '';
       this.userEmail = this.userProfile.email || 'Not set';
+      this.ownerPhotoUrl = String((this.userProfile as any).photoUrl || '');
 
       const libraryData: any = await this.firestoreService.getLibraryData(this.userProfile.libraryId);
       if (libraryData) {
         this.totalSeats = Number(libraryData.totalSeats ?? libraryData.seatCount ?? this.totalSeats);
         this.monthlyFee = Number(libraryData.monthlyFee ?? this.monthlyFee);
+        this.libraryPhotoUrl = String(libraryData.photoUrl || '');
       }
     }
   }

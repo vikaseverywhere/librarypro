@@ -1,6 +1,15 @@
 <ion-header>
   <ion-toolbar class="pro-toolbar">
     <ion-buttons slot="start">
+      <ion-button fill="clear" [routerLink]="['/dashboard']" class="toolbar-brand">
+        <div class="toolbar-brand-content">
+          <div class="toolbar-brand-circle">LP</div>
+          <div class="toolbar-brand-text">
+            <div class="brand-main">LibraryPro</div>
+            <div class="brand-sub">Home</div>
+          </div>
+        </div>
+      </ion-button>
       <ion-back-button defaultHref="/libraries"></ion-back-button>
     </ion-buttons>
     <ion-title>
@@ -48,6 +57,16 @@
       <ion-item *ngIf="shiftCount >= 2">
         <ion-label position="stacked">Shift 2 Monthly Fee (₹)</ion-label>
         <ion-input type="number" [(ngModel)]="shift2Fee" min="0"></ion-input>
+      </ion-item>
+
+      <ion-item *ngIf="shiftCount >= 3">
+        <ion-label position="stacked">Shift 3 Monthly Fee (₹)</ion-label>
+        <ion-input type="number" [(ngModel)]="shift3Fee" min="0"></ion-input>
+      </ion-item>
+
+      <ion-item *ngIf="shiftCount >= 4">
+        <ion-label position="stacked">Shift 4 Monthly Fee (₹)</ion-label>
+        <ion-input type="number" [(ngModel)]="shift4Fee" min="0"></ion-input>
       </ion-item>
     </ion-list>
 
