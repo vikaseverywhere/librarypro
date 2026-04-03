@@ -1,0 +1,121 @@
+<ion-page>
+  <ion-header>
+    <ion-toolbar class="pro-toolbar">
+      <ion-buttons slot="start">
+        <ion-button fill="clear" [routerLink]="['/dashboard']" class="toolbar-brand">
+          <div class="toolbar-brand-content">
+            <div class="toolbar-brand-circle">LP</div>
+            <div class="toolbar-brand-text">
+              <div class="brand-main">LibraryPro</div>
+              <div class="brand-sub">Home</div>
+            </div>
+          </div>
+        </ion-button>
+        <ion-back-button defaultHref="/dashboard"></ion-back-button>
+      </ion-buttons>
+      <ion-title>
+        <div class="header-title">
+          <div class="header-main">Manage Plans</div>
+          <div class="header-sub">{{ libraryName }}</div>
+        </div>
+      </ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-content>
+    <div class="plans-container">
+      <div class="plans-header">
+        <h2>Fee Plans</h2>
+        <p>Create plans for different shifts, durations, and fee structures. Students will select a plan at the time of admission.</p>
+        <ion-button (click)="openAddForm()" *ngIf="!showForm">
+          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+          Create New Plan
+        </ion-button>
+      </div>
+
+      <!-- Plan Form -->
+      <div class="plan-form-card" *ngIf="showForm">
+        <h3>{{ isEditing ? 'Edit Plan' : 'Create New Plan' }}</h3>
+
+        <ion-item>
+          <ion-label position="floating">Plan Name</ion-label>
+          <ion-input type="text" [(ngModel)]="formData.name" placeholder="e.g. Morning Full Monthly"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Shift Name</ion-label>
+          <ion-input type="text" [(ngModel)]="formData.shift" placeholder="e.g. Shift 1, Morning, Evening"></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-label>Duration</ion-label>
+          <ion-select [(ngModel)]="formData.duration" interface="popover">
+            <ion-select-option *ngFor="let d of durations" [value]="d.value">{{ d.label }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label>Shift Type</ion-label>
+          <ion-select [(ngModel)]="formData.shiftType" interface="popover">
+            <ion-select-option *ngFor="let s of shiftTypes" [value]="s.value">{{ s.label }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-label position="floating">Amount (₹)</ion-label>
+          <ion-input type="number" [(ngModel)]="formData.amount" min="1" placeholder="e.g. 2500"></ion-input>
+        </ion-item>
+
+        <div class="form-actions">
+          <ion-button (click)="onSave()" [disabled]="!isFormValid() || isSaving">
+            <ion-spinner *ngIf="isSaving" name="crescent" slot="start"></ion-spinner>
+            {{ isSaving ? 'Saving...' : (isEditing ? 'Update Plan' : 'Create Plan') }}
+          </ion-button>
+          <ion-button fill="outline" (click)="closeForm()">Cancel</ion-button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="loading-container">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Loading plans...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && plans.length === 0 && !showForm" class="empty-state">
+        <ion-icon name="document-text-outline"></ion-icon>
+        <h3>No Plans Created Yet</h3>
+        <p>Create your first fee plan to get started. You can define plans for different shifts, durations, and fee structures.</p>
+        <ion-button (click)="openAddForm()">
+          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+          Create First Plan
+        </ion-button>
+      </div>
+
+      <!-- Plans List -->
+      <div *ngIf="!isLoading && plans.length > 0" class="plans-list">
+        <div class="plan-card" *ngFor="let plan of plans">
+          <div class="plan-card-header">
+            <h3>{{ plan.name }}</h3>
+            <div class="plan-amount">₹{{ plan.amount | number:'1.0-0' }}</div>
+          </div>
+          <div class="plan-details">
+            <div class="plan-tag duration">{{ getDurationLabel(plan.duration) }}</div>
+            <div class="plan-tag shift">{{ plan.shift }}</div>
+            <div class="plan-tag shift-type">{{ getShiftTypeLabel(plan.shiftType) }}</div>
+          </div>
+          <div class="plan-actions">
+            <ion-button size="small" fill="clear" (click)="openEditForm(plan)">
+              <ion-icon name="create-outline" slot="start"></ion-icon>
+              Edit
+            </ion-button>
+            <ion-button size="small" fill="clear" color="danger" (click)="onDelete(plan)">
+              <ion-icon name="trash-outline" slot="start"></ion-icon>
+              Delete
+            </ion-button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ion-content>
+</ion-page>

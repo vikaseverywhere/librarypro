@@ -74,8 +74,7 @@ export class AuthService {
     password: string,
     libraryName: string,
     city: string,
-    totalSeats: number,
-    shifts: Array<{ id: string; name: string; monthlyFee: number }> = []
+    totalSeats: number
   ) {
     try {
       const userCredential = await this.afAuth.createUserWithEmailAndPassword(email, password);
@@ -115,7 +114,7 @@ export class AuthService {
         subscriptionAmount: 0,
         totalSeats,
         seatCount: totalSeats,
-        shifts,
+        shifts: [],
         photoUrl: '',
         currency: 'INR',
         timezone: 'Asia/Kolkata',

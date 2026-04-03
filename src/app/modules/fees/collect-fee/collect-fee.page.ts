@@ -118,7 +118,7 @@ export class CollectFeePage implements OnInit {
 
   selectStudent(student: Student) {
     this.selectedStudent = student;
-    // Auto-calc fee based on student's shift-based monthly fee when available.
+    // Auto-calc fee based on student's plan fee amount when available.
     const monthlyFee = Number((student as any).monthlyFee || 0);
     if (monthlyFee > 0) {
       this.feeAmount = String(monthlyFee);

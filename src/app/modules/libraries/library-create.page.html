@@ -44,30 +44,6 @@
         <ion-input type="number" [(ngModel)]="monthlyFee" min="0"></ion-input>
       </ion-item>
 
-      <ion-item>
-        <ion-label position="stacked">How many shifts?</ion-label>
-        <ion-input type="number" [(ngModel)]="shiftCount" min="1" max="4"></ion-input>
-      </ion-item>
-
-      <ion-item>
-        <ion-label position="stacked">Shift 1 Monthly Fee (₹)</ion-label>
-        <ion-input type="number" [(ngModel)]="shift1Fee" min="0"></ion-input>
-      </ion-item>
-
-      <ion-item *ngIf="shiftCount >= 2">
-        <ion-label position="stacked">Shift 2 Monthly Fee (₹)</ion-label>
-        <ion-input type="number" [(ngModel)]="shift2Fee" min="0"></ion-input>
-      </ion-item>
-
-      <ion-item *ngIf="shiftCount >= 3">
-        <ion-label position="stacked">Shift 3 Monthly Fee (₹)</ion-label>
-        <ion-input type="number" [(ngModel)]="shift3Fee" min="0"></ion-input>
-      </ion-item>
-
-      <ion-item *ngIf="shiftCount >= 4">
-        <ion-label position="stacked">Shift 4 Monthly Fee (₹)</ion-label>
-        <ion-input type="number" [(ngModel)]="shift4Fee" min="0"></ion-input>
-      </ion-item>
     </ion-list>
 
     <div style="margin-top: 10px;">

@@ -102,11 +102,32 @@
           <h3>Settings</h3>
           <p>Manage library profile</p>
         </div>
+        <div class="action-card" (click)="navigateToPlans()">
+          <ion-icon name="document-text-outline" size="large"></ion-icon>
+          <h3>Manage Plans</h3>
+          <p>Fee plans & pricing</p>
+        </div>
         <div class="action-card" (click)="onQuickViewStudents()">
           <ion-icon name="search-outline" size="large"></ion-icon>
           <h3>View Students</h3>
           <p>See all students list</p>
         </div>
+      </div>
+    </div>
+
+    <!-- Seat Map -->
+    <div class="info-section">
+      <div class="info-card">
+        <div class="info-header">
+          <ion-icon name="grid-outline"></ion-icon>
+          <h3>Seat Map</h3>
+        </div>
+        <app-seat-map
+          [totalSeats]="stats.totalCapacity"
+          [occupiedSeats]="occupiedSeatData"
+          mode="view"
+          [showNames]="true"
+        ></app-seat-map>
       </div>
     </div>
 

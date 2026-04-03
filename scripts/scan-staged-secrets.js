@@ -14,7 +14,8 @@ function runGit(args) {
 const blockedFilePatterns = [
     /^src\/environments\/environment\.ts$/i,
     /^src\/environments\/environment\.prod\.ts$/i,
-    /^\.env(\..+)?$/i
+    /^\.env(\..+)?$/i,
+    /service[-_]?account[-_]?key.*\.json$/i
 ];
 
 const secretPatterns = [

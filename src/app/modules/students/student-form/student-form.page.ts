@@ -4,9 +4,11 @@ import { StudentService } from '../../../core/firestore/student.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LibraryStateService } from '../../../core/library-state.service';
 import { ToastController } from '@ionic/angular';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FirestoreService } from '../../../core/firestore/firestore.service';
-import { compressImageToJpeg } from '../../../core/utils/image-compress';
+import { PlanService, Plan } from '../../../core/firestore/plan.service';
+import { SeatInfo } from '../../../shared/components/seat-map.component';
+import { PhotoUploadService } from '../../../core/photo-upload.service';
+
 
 @Component({
   selector: 'app-student-form',
@@ -23,9 +25,12 @@ export class StudentFormPage implements OnInit, OnDestroy {
   selectedPhotoFile: File | null = null;
   libraryName = '';
   userEmail = '';
-  shifts: Array<{ id: string; name: string; monthlyFee: number }> = [];
-  selectedShiftIds: string[] = [];
-  calculatedMonthlyFee = 0;
+  plans: Plan[] = [];
+  selectedPlanId = '';
+  selectedPlan: Plan | null = null;
+  totalSeats = 0;
+  occupiedSeatData: SeatInfo[] = [];
+  editingSeatNumber: number | null = null;
 
   formData = {
     name: '',
@@ -52,7 +57,9 @@ export class StudentFormPage implements OnInit, OnDestroy {
     private authService: AuthService,
     private libraryStateService: LibraryStateService,
     private toastController: ToastController,
-    private firestoreService: FirestoreService
+    private firestoreService: FirestoreService,
+    private planService: PlanService,
+    private photoUploadService: PhotoUploadService
   ) {
     console.log('StudentFormPage constructor called');
   }
@@ -66,11 +73,19 @@ export class StudentFormPage implements OnInit, OnDestroy {
     });
 
     try {
-      const lib: any = await this.firestoreService.getCurrentLibraryData();
-      this.shifts = Array.isArray(lib?.shifts) ? lib.shifts : [];
+      this.plans = await this.planService.getActivePlans();
     } catch {
-      this.shifts = [];
+      this.plans = [];
     }
+
+    // Load seat map data
+    try {
+      const lib: any = await this.firestoreService.getCurrentLibraryData();
+      this.totalSeats = Number(lib?.totalSeats || lib?.seatCount || 0);
+    } catch {
+      this.totalSeats = 0;
+    }
+    await this.loadOccupiedSeats();
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -104,8 +119,10 @@ export class StudentFormPage implements OnInit, OnDestroy {
       };
 
       this.photoPreviewUrl = student.photoUrl || null;
-      this.selectedShiftIds = Array.isArray((student as any).shiftIds) ? (student as any).shiftIds : [];
-      this.recalculateMonthlyFee();
+      this.selectedPlanId = (student as any).planId || '';
+      this.selectedPlan = this.plans.find(p => p.id === this.selectedPlanId) || null;
+      // Track current seat so the seat map shows it as editable
+      this.editingSeatNumber = student.seatNumber || null;
     } catch (error) {
       console.error('Error loading student:', error);
       this.errorMessage = 'Failed to load student details';
@@ -144,7 +161,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
       Number.isInteger(seat) &&
       seat >= 1 &&
       /^\d{12}$/.test(adhar) &&
-      (this.shifts.length === 0 || this.selectedShiftIds.length > 0) &&
+      (this.plans.length === 0 || this.selectedPlanId) &&
       String(this.formData.city || '').trim() &&
       String(this.formData.state || '').trim() &&
       String(this.formData.addressLine2 || '').trim() &&
@@ -226,87 +243,55 @@ export class StudentFormPage implements OnInit, OnDestroy {
     }
 
     const adharNormalized = String(this.formData.adharNumber || '').trim();
-    this.recalculateMonthlyFee();
+    const feeAmount = this.selectedPlan ? this.selectedPlan.amount : 0;
 
     this.errorMessage = '';
     this.isSaving = true;
     try {
-      if (this.isEditMode && this.studentId) {
-        await this.studentService.updateStudent(this.studentId, {
-          name: this.formData.name,
-          fatherName: this.formData.fatherName,
-          email: this.formData.email,
-          phone: this.formData.phone,
-          seatNumber,
-          adharNumber: adharNormalized,
-          shiftIds: this.selectedShiftIds,
-          monthlyFee: this.calculatedMonthlyFee,
-          addressLine1: String(this.formData.addressLine1 || '').trim(),
-          addressLine2: String(this.formData.addressLine2 || '').trim(),
-          city: String(this.formData.city || '').trim(),
-          state: String(this.formData.state || '').trim(),
-          pincode: String(this.formData.pincode || '').trim()
-        });
+      // Compress photo to base64 data URL (stored in Firestore, no Storage needed)
+      let photoUrl: string | undefined;
+      if (this.selectedPhotoFile) {
+        photoUrl = await this.photoUploadService.compressToDataUrl(
+          this.selectedPhotoFile,
+          { maxSizePx: 720, quality: 0.7 }
+        );
+      }
 
-        // Upload photo if selected.
-        if (this.selectedPhotoFile) {
-          const url = await this.uploadStudentPhoto(this.studentId, this.selectedPhotoFile);
-          await this.studentService.updateStudent(this.studentId, { photoUrl: url });
-        }
+      const baseFields: any = {
+        name: this.formData.name,
+        fatherName: this.formData.fatherName,
+        email: this.formData.email,
+        phone: this.formData.phone,
+        seatNumber,
+        adharNumber: adharNormalized,
+        planId: this.selectedPlanId,
+        planName: this.selectedPlan?.name || '',
+        monthlyFee: feeAmount,
+        addressLine1: String(this.formData.addressLine1 || '').trim(),
+        addressLine2: String(this.formData.addressLine2 || '').trim(),
+        city: String(this.formData.city || '').trim(),
+        state: String(this.formData.state || '').trim(),
+        pincode: String(this.formData.pincode || '').trim()
+      };
+      if (photoUrl) baseFields.photoUrl = photoUrl;
+
+      if (this.isEditMode && this.studentId) {
+        await this.studentService.updateStudent(this.studentId, baseFields);
       } else {
         const match = await this.studentService.findByAdharNumber(adharNormalized);
         if (match && match.isActive === false) {
-          await this.studentService.reactivateStudent(match.studentId, {
-            name: this.formData.name,
-            fatherName: this.formData.fatherName,
-            email: this.formData.email,
-            phone: this.formData.phone,
-            seatNumber,
-            adharNumber: adharNormalized,
-            shiftIds: this.selectedShiftIds,
-            monthlyFee: this.calculatedMonthlyFee,
-            addressLine1: String(this.formData.addressLine1 || '').trim(),
-            addressLine2: String(this.formData.addressLine2 || '').trim(),
-            city: String(this.formData.city || '').trim(),
-            state: String(this.formData.state || '').trim(),
-            pincode: String(this.formData.pincode || '').trim()
+          await this.studentService.reactivateStudent(match.studentId, baseFields);
+        } else {
+          await this.studentService.addStudent({
+            ...baseFields,
+            enrollmentDate: new Date(),
+            totalFeePending: 0,
+            seatStatus: 'occupied',
+            isActive: true
           } as any);
-
-          if (this.selectedPhotoFile) {
-            const url = await this.uploadStudentPhoto(match.studentId, this.selectedPhotoFile);
-            await this.studentService.updateStudent(match.studentId, { photoUrl: url } as any);
-          }
-          await this.toast('Student reactivated successfully.', 'success');
-          this.router.navigate(['/students']);
-          return;
-        }
-
-        const newStudentId = await this.studentService.addStudent({
-          name: this.formData.name,
-            fatherName: this.formData.fatherName,
-          email: this.formData.email,
-          phone: this.formData.phone,
-          seatNumber,
-          enrollmentDate: new Date(),
-          totalFeePending: 0,
-          seatStatus: 'occupied',
-          adharNumber: adharNormalized,
-          shiftIds: this.selectedShiftIds,
-          monthlyFee: this.calculatedMonthlyFee,
-          addressLine1: String(this.formData.addressLine1 || '').trim(),
-          addressLine2: String(this.formData.addressLine2 || '').trim(),
-          city: String(this.formData.city || '').trim(),
-            state: String(this.formData.state || '').trim(),
-          pincode: String(this.formData.pincode || '').trim(),
-          isActive: true
-        } as any);
-
-        if (this.selectedPhotoFile) {
-          const url = await this.uploadStudentPhoto(newStudentId, this.selectedPhotoFile);
-          await this.studentService.updateStudent(newStudentId, { photoUrl: url });
         }
       }
-      console.log('Student saved, navigating back');
+
       this.router.navigate(['/students']);
     } catch (error: any) {
       console.error('Error saving student:', error);
@@ -338,39 +323,31 @@ export class StudentFormPage implements OnInit, OnDestroy {
     this.photoPreviewUrl = URL.createObjectURL(file);
   }
 
-  private async uploadStudentPhoto(studentId: string, file: File): Promise<string> {
-    const profile = this.authService.currentUserProfileValue;
-    const libraryId = this.libraryStateService.currentLibraryId;
-    if (!profile?.uid) throw new Error('User not authenticated.');
-    if (!libraryId) throw new Error('Library context missing.');
-
-    // Storage path includes uid so simple Storage rules can protect it.
-    const path = `userUploads/${profile.uid}/libraries/${libraryId}/students/${studentId}/photo.jpg`;
-    const storage = getStorage();
-
-    const ref = storageRef(storage, path);
-    const blob = await compressImageToJpeg(file, { maxSizePx: 720, quality: 0.7 });
-    await uploadBytes(ref, blob);
-    return await getDownloadURL(ref);
+  onPlanChange(planId: string) {
+    this.selectedPlanId = planId;
+    this.selectedPlan = this.plans.find(p => p.id === planId) || null;
   }
 
-  onShiftToggle(shiftId: string, checked: boolean) {
-    if (checked) {
-      if (!this.selectedShiftIds.includes(shiftId)) {
-        this.selectedShiftIds = [...this.selectedShiftIds, shiftId];
-      }
-    } else {
-      this.selectedShiftIds = this.selectedShiftIds.filter((id) => id !== shiftId);
+  private async loadOccupiedSeats() {
+    try {
+      const allStudents = await this.studentService.getAllStudents(1000);
+      this.occupiedSeatData = allStudents
+        .filter(s => s.seatNumber && s.seatNumber > 0)
+        // In edit mode, exclude the current student's seat so they can keep it
+        .filter(s => !(this.isEditMode && (s.studentId === this.studentId || s.id === this.studentId)))
+        .map(s => ({
+          number: s.seatNumber!,
+          status: 'occupied' as const,
+          studentName: s.name,
+          studentId: s.studentId || s.id
+        }));
+    } catch {
+      this.occupiedSeatData = [];
     }
-    this.recalculateMonthlyFee();
   }
 
-  private recalculateMonthlyFee() {
-    const byId = new Map(this.shifts.map((s) => [s.id, s]));
-    this.calculatedMonthlyFee = this.selectedShiftIds.reduce((sum, id) => {
-      const s = byId.get(id);
-      return sum + Number(s?.monthlyFee || 0);
-    }, 0);
+  onSeatSelected(seatNumber: number) {
+    this.formData.seatNumber = String(seatNumber);
   }
 
   private async toast(message: string, color: 'success' | 'danger') {

@@ -32,8 +32,10 @@ service cloud.firestore {
       // and also via membership (libraryIds/libraryId) for extra safety.
       allow read: if belongsToLibrary(libraryId)
         || (resource.data.ownerUid == request.auth.uid);
-      allow write: if belongsToLibrary(libraryId)
-        || (request.auth.uid == request.resource.data.ownerUid);
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if belongsToLibrary(libraryId)
+        || (resource.data.ownerUid == request.auth.uid);
       
       // Students subcollection
       match /students/{studentId} {
@@ -42,6 +44,11 @@ service cloud.firestore {
       
       // Fees subcollection
       match /fees/{feeId} {
+        allow read, write: if belongsToLibrary(libraryId);
+      }
+      
+      // Plans subcollection
+      match /plans/{planId} {
         allow read, write: if belongsToLibrary(libraryId);
       }
       

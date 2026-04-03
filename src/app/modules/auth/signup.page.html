@@ -51,31 +51,6 @@
             [class.ion-invalid]="totalSeats?.invalid && totalSeats?.touched"
           ></ion-input>
         </ion-item>
-        <ion-item>
-          <ion-label position="floating">How many shifts?</ion-label>
-          <ion-input type="number" formControlName="shiftCount" min="1" max="4"></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="floating">Shift 1 Monthly Fee (₹)</ion-label>
-          <ion-input type="number" formControlName="shift1Fee" min="0"></ion-input>
-        </ion-item>
-
-        <ion-item *ngIf="signupForm.get('shiftCount')?.value >= 2">
-          <ion-label position="floating">Shift 2 Monthly Fee (₹)</ion-label>
-          <ion-input type="number" formControlName="shift2Fee" min="0"></ion-input>
-        </ion-item>
-
-        <ion-item *ngIf="signupForm.get('shiftCount')?.value >= 3">
-          <ion-label position="floating">Shift 3 Monthly Fee (₹)</ion-label>
-          <ion-input type="number" formControlName="shift3Fee" min="0"></ion-input>
-        </ion-item>
-
-        <ion-item *ngIf="signupForm.get('shiftCount')?.value >= 4">
-          <ion-label position="floating">Shift 4 Monthly Fee (₹)</ion-label>
-          <ion-input type="number" formControlName="shift4Fee" min="0"></ion-input>
-        </ion-item>
-
         <div style="margin: 0.6rem 0 0.2rem; font-weight: 700; color: #1e3a5f;">
           Photos (optional)
         </div>

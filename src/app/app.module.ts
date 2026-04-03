@@ -12,7 +12,6 @@ import { AuthGuard } from './core/auth/auth.guard';
 // Firebase
 import { AngularFireModule } from '@angular/fire/compat';
 import { AngularFireAuthModule } from '@angular/fire/compat/auth';
-import { AngularFireStorageModule } from '@angular/fire/compat/storage';
 import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
 
 import { environment } from '../environments/environment';
@@ -29,6 +28,8 @@ import { LibraryCreatePage } from './modules/libraries/library-create.page';
 import { TransactionsPage } from './modules/transactions/transactions.page';
 import { ReceiptDetailPage } from './modules/transactions/receipt-detail.page';
 import { StudentProfilePage } from './modules/students/student-profile/student-profile.page';
+import { PlansPage } from './modules/plans/plans.page';
+import { SeatMapComponent } from './shared/components/seat-map.component';
 
 const routes: Routes = [
   { path: 'auth', loadChildren: () => import('./modules/auth/auth.module').then(m => m.AuthModule) },
@@ -44,6 +45,7 @@ const routes: Routes = [
   { path: 'transactions',      canActivate: [AuthGuard], component: TransactionsPage },
   { path: 'transactions/:id',  canActivate: [AuthGuard], component: ReceiptDetailPage },
   { path: 'settings',          canActivate: [AuthGuard], component: SettingsPage },
+  { path: 'plans',              canActivate: [AuthGuard], component: PlansPage },
   { path: '',                  redirectTo: 'auth/login', pathMatch: 'full' },
   { path: '**',                redirectTo: 'auth/login' }
 ];
@@ -61,7 +63,9 @@ const routes: Routes = [
     LibraryCreatePage,
     TransactionsPage,
     ReceiptDetailPage,
-    StudentProfilePage
+    StudentProfilePage,
+    PlansPage,
+    SeatMapComponent
   ],
   imports: [
     BrowserModule,
@@ -74,8 +78,7 @@ const routes: Routes = [
     FormsModule,
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireAuthModule,
-    AngularFirestoreModule,
-    AngularFireStorageModule
+    AngularFirestoreModule
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }

@@ -3,9 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController } from '@ionic/angular';
 import { AuthService } from '../../core/auth/auth.service';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { compressImageToJpeg } from '../../core/utils/image-compress';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { PhotoUploadService } from '../../core/photo-upload.service';
 
 @Component({
   selector: 'app-signup',
@@ -24,7 +23,8 @@ export class SignupPage implements OnInit {
     private router: Router,
     private loadingController: LoadingController,
     private toastController: ToastController,
-    private firestore: AngularFirestore
+    private firestore: AngularFirestore,
+    private photoUploadService: PhotoUploadService
   ) {}
 
   ngOnInit() {
@@ -36,11 +36,6 @@ export class SignupPage implements OnInit {
       libraryName: ['', [Validators.required, Validators.minLength(3)]],
       city: ['', [Validators.required]],
       totalSeats: [50, [Validators.required, Validators.min(1)]],
-      shiftCount: [2, [Validators.required, Validators.min(1), Validators.max(4)]],
-      shift1Fee: [2500, [Validators.required, Validators.min(0)]],
-      shift2Fee: [2500, [Validators.required, Validators.min(0)]],
-      shift3Fee: [2500, [Validators.required, Validators.min(0)]],
-      shift4Fee: [2500, [Validators.required, Validators.min(0)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]]
@@ -74,43 +69,32 @@ export class SignupPage implements OnInit {
     await loading.present();
 
     try {
-      const { email, password, libraryName, city, totalSeats, shiftCount, shift1Fee, shift2Fee } = this.signupForm.value;
-
-      const shifts: Array<{ id: string; name: string; monthlyFee: number }> = [];
-      const count = Math.max(1, Number(shiftCount) || 1);
-      shifts.push({ id: 's1', name: 'Shift 1', monthlyFee: Number(shift1Fee) || 0 });
-      if (count >= 2) shifts.push({ id: 's2', name: 'Shift 2', monthlyFee: Number(shift2Fee) || 0 });
-      if (count >= 3) shifts.push({ id: 's3', name: 'Shift 3', monthlyFee: Number((this.signupForm.value as any).shift3Fee) || 0 });
-      if (count >= 4) shifts.push({ id: 's4', name: 'Shift 4', monthlyFee: Number((this.signupForm.value as any).shift4Fee) || 0 });
+      const { email, password, libraryName, city, totalSeats } = this.signupForm.value;
 
       const profile = await this.authService.signup(
         email,
         password,
         libraryName,
         city,
-        Number(totalSeats),
-        shifts
+        Number(totalSeats)
       );
 
-      // Upload optional photos (compressed) and store URLs.
+      // Compress and store photos as base64 in Firestore (no Storage needed)
       const libraryId = profile.libraryId;
       const uid = profile.uid;
-      const storage = getStorage();
 
       if (this.ownerPhotoFile) {
-        const blob = await compressImageToJpeg(this.ownerPhotoFile, { maxSizePx: 720, quality: 0.7 });
-        const ref = storageRef(storage, `userUploads/${uid}/profile/owner.jpg`);
-        await uploadBytes(ref, blob);
-        const url = await getDownloadURL(ref);
-        await this.firestore.doc(`users/${uid}`).set({ photoUrl: url, updatedAt: new Date() }, { merge: true });
+        const dataUrl = await this.photoUploadService.compressToDataUrl(
+          this.ownerPhotoFile, { maxSizePx: 720, quality: 0.7 }
+        );
+        await this.firestore.doc(`users/${uid}`).set({ photoUrl: dataUrl, updatedAt: new Date() }, { merge: true });
       }
 
       if (this.libraryPhotoFile) {
-        const blob = await compressImageToJpeg(this.libraryPhotoFile, { maxSizePx: 900, quality: 0.72 });
-        const ref = storageRef(storage, `userUploads/${uid}/libraries/${libraryId}/library.jpg`);
-        await uploadBytes(ref, blob);
-        const url = await getDownloadURL(ref);
-        await this.firestore.doc(`libraries/${libraryId}`).set({ photoUrl: url, updatedAt: new Date() }, { merge: true });
+        const dataUrl = await this.photoUploadService.compressToDataUrl(
+          this.libraryPhotoFile, { maxSizePx: 900, quality: 0.72 }
+        );
+        await this.firestore.doc(`libraries/${libraryId}`).set({ photoUrl: dataUrl, updatedAt: new Date() }, { merge: true });
       }
       
       await loading.dismiss();

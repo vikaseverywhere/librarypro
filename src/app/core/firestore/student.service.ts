@@ -19,9 +19,12 @@ export interface Student {
   seatNumber?: number;
   enrollmentDate: Date | any;
   seatStatus: 'occupied' | 'vacant';
-  // Shift IDs selected by the student (multi-select).
+  // Shift IDs selected by the student (multi-select). [legacy]
   shiftIds?: string[];
-  // Cached monthly fee based on shift selection (sum of shift fees).
+  // Plan-based fee: selected plan ID and name.
+  planId?: string;
+  planName?: string;
+  // Cached monthly fee based on plan selection.
   monthlyFee?: number;
   // Address
   addressLine1?: string;

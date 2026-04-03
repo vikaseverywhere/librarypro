@@ -16,11 +16,6 @@ export class LibraryCreatePage implements OnInit {
   city = '';
   totalSeats: number = 50;
   monthlyFee: number = 5000;
-  shiftCount: number = 2;
-  shift1Fee: number = 2500;
-  shift2Fee: number = 2500;
-  shift3Fee: number = 2500;
-  shift4Fee: number = 2500;
   libraryPhotoFile: File | null = null;
   isSaving = false;
 
@@ -39,13 +34,6 @@ export class LibraryCreatePage implements OnInit {
     const c = this.city.trim();
     const seats = Number(this.totalSeats);
     const fee = Number(this.monthlyFee);
-    const count = Math.max(1, Number(this.shiftCount) || 1);
-    const shifts: Array<{ id: string; name: string; monthlyFee: number }> = [
-      { id: 's1', name: 'Shift 1', monthlyFee: Number(this.shift1Fee) || 0 }
-    ];
-    if (count >= 2) shifts.push({ id: 's2', name: 'Shift 2', monthlyFee: Number(this.shift2Fee) || 0 });
-    if (count >= 3) shifts.push({ id: 's3', name: 'Shift 3', monthlyFee: Number(this.shift3Fee) || 0 });
-    if (count >= 4) shifts.push({ id: 's4', name: 'Shift 4', monthlyFee: Number(this.shift4Fee) || 0 });
 
     if (!n) {
       await this.toast('Please enter library name.', 'danger');
@@ -70,8 +58,7 @@ export class LibraryCreatePage implements OnInit {
         name: n,
         city: c,
         totalSeats: seats,
-        monthlyFee: fee,
-        shifts
+        monthlyFee: fee
       });
 
       // Upload optional library photo (compressed)

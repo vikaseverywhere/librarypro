@@ -1,0 +1,153 @@
+.plans-container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.plans-header {
+  margin-bottom: 20px;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1e3a5f;
+    margin: 0 0 6px;
+  }
+
+  p {
+    color: #637898;
+    font-size: 0.92rem;
+    margin: 0 0 14px;
+  }
+}
+
+.plan-form-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin: 0 0 12px;
+  }
+
+  ion-item {
+    --padding-start: 0;
+    margin-bottom: 6px;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+}
+
+.loading-container {
+  text-align: center;
+  padding: 40px 0;
+  color: #637898;
+
+  ion-spinner {
+    display: block;
+    margin: 0 auto 10px;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 50px 20px;
+  color: #637898;
+
+  ion-icon {
+    font-size: 64px;
+    color: #b0c4de;
+    display: block;
+    margin: 0 auto 12px;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 0.92rem;
+    margin: 0 0 16px;
+  }
+}
+
+.plans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.plan-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+
+  .plan-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+    h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1e3a5f;
+      margin: 0;
+    }
+
+    .plan-amount {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #2e7d32;
+    }
+  }
+
+  .plan-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .plan-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+
+    &.duration {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    &.shift {
+      background: #fce4ec;
+      color: #c62828;
+    }
+
+    &.shift-type {
+      background: #f3e5f5;
+      color: #7b1fa2;
+    }
+  }
+
+  .plan-actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+}

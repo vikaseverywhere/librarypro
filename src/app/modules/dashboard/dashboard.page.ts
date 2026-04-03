@@ -8,6 +8,7 @@ import { StudentService } from '../../core/firestore/student.service';
 import { FeeStateService } from '../../core/fee-state.service';
 import { LibraryStateService } from '../../core/library-state.service';
 import { FirestoreService } from '../../core/firestore/firestore.service';
+import { SeatInfo } from '../../shared/components/seat-map.component';
 
 interface DashboardStats {
   totalStudents: number;
@@ -42,6 +43,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   isEditingCapacity = false;
   capacityInput = '1';
   isSavingCapacity = false;
+  occupiedSeatData: SeatInfo[] = [];
 
   private seatsSub?: Subscription;
   private feeStatsSub?: Subscription;
@@ -116,6 +118,17 @@ export class DashboardPage implements OnInit, OnDestroy {
       }
 
       const studentStats = await this.studentService.getStudentStats();
+
+      // Load occupied seat data for the seat map
+      const allStudents = await this.studentService.getAllStudents(1000);
+      this.occupiedSeatData = allStudents
+        .filter(s => s.seatNumber && s.seatNumber > 0)
+        .map(s => ({
+          number: s.seatNumber!,
+          status: 'occupied' as const,
+          studentName: s.name,
+          studentId: s.studentId || s.id
+        }));
 
       // Use the synchronous snapshot from LibraryStateService
       // (updated in real-time by the subscription above)
@@ -205,6 +218,10 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   navigateToReceipts() {
     this.navController.navigateForward('/transactions');
+  }
+
+  navigateToPlans() {
+    this.navController.navigateForward('/plans');
   }
 
   onQuickAddStudent() {

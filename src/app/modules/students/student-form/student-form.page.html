@@ -73,7 +73,25 @@
         </ion-input>
       </ion-item>
 
-      <ion-item>
+      <div *ngIf="totalSeats > 0" style="margin: 0.5rem 0 1rem;">
+        <div style="font-weight: 800; color:#1e3a5f; margin-bottom: 0.5rem;">
+          Select Seat
+          <span *ngIf="formData.seatNumber" style="font-weight: 600; color: #16a34a; margin-left: 8px;">
+            — Seat #{{ formData.seatNumber }}
+          </span>
+        </div>
+        <app-seat-map
+          [totalSeats]="totalSeats"
+          [occupiedSeats]="occupiedSeatData"
+          mode="select"
+          [selectedSeat]="formData.seatNumber ? +formData.seatNumber : null"
+          [editingStudentSeat]="editingSeatNumber"
+          [showNames]="true"
+          (seatSelected)="onSeatSelected($event)"
+        ></app-seat-map>
+      </div>
+
+      <ion-item *ngIf="totalSeats === 0">
         <ion-label position="floating">Seat Number</ion-label>
         <ion-input
           type="number"
@@ -96,18 +114,29 @@
         ></ion-input>
       </ion-item>
 
-      <div *ngIf="shifts.length > 0" style="margin: 0.5rem 0 1rem;">
-        <div style="font-weight: 800; color:#1e3a5f; margin-bottom: 0.5rem;">Select Shifts</div>
-        <ion-item *ngFor="let s of shifts">
-          <ion-label>{{ s.name }} (₹{{ s.monthlyFee | number: '1.0-0' }})</ion-label>
-          <ion-checkbox
-            slot="end"
-            [checked]="selectedShiftIds.includes(s.id)"
-            (ionChange)="onShiftToggle(s.id, $event.detail.checked)"
-          ></ion-checkbox>
+      <div *ngIf="plans.length > 0" style="margin: 0.5rem 0 1rem;">
+        <div style="font-weight: 800; color:#1e3a5f; margin-bottom: 0.5rem;">Select Plan</div>
+        <ion-item>
+          <ion-label>Choose a plan</ion-label>
+          <ion-select [(ngModel)]="selectedPlanId" (ionChange)="onPlanChange($event.detail.value)" interface="popover" placeholder="Select plan">
+            <ion-select-option *ngFor="let p of plans" [value]="p.id">
+              {{ p.name }} — ₹{{ p.amount | number:'1.0-0' }} ({{ p.duration }}, {{ p.shift }}, {{ p.shiftType === 'full' ? 'Full' : 'Half' }})
+            </ion-select-option>
+          </ion-select>
         </ion-item>
-        <div style="margin-top: 0.5rem; color:#637898; font-weight: 700;">
-          Calculated Monthly Fee: ₹{{ calculatedMonthlyFee | number:'1.0-0' }}
+        <div *ngIf="selectedPlan" style="margin-top: 0.5rem; color:#637898; font-weight: 700;">
+          Plan Fee: ₹{{ selectedPlan.amount | number:'1.0-0' }}
+          <span style="font-weight: 400;"> · {{ selectedPlan.duration }} · {{ selectedPlan.shift }} · {{ selectedPlan.shiftType === 'full' ? 'Full Shift' : 'Half Shift' }}</span>
+        </div>
+        <div *ngIf="plans.length > 0 && !selectedPlanId" style="margin-top: 0.3rem; color: #e53935; font-size: 0.85rem;">
+          Please select a plan for this student.
+        </div>
+      </div>
+
+      <div *ngIf="plans.length === 0" style="margin: 0.5rem 0 1rem; padding: 12px; background: #fff3e0; border-radius: 8px;">
+        <div style="font-weight: 700; color: #e65100;">No plans created yet</div>
+        <div style="font-size: 0.85rem; color: #bf360c; margin-top: 4px;">
+          Go to <a routerLink="/plans" style="font-weight:700;">Manage Plans</a> to create fee plans first.
         </div>
       </div>
 
