@@ -169,6 +169,14 @@ export class StudentFormPage implements OnInit, OnDestroy {
     );
   }
 
+  isPhoneValid(): boolean {
+    return /^\d{10}$/.test(String(this.formData.phone || '').trim());
+  }
+
+  isAadhaarValid(): boolean {
+    return /^\d{12}$/.test(String(this.formData.adharNumber || '').trim());
+  }
+
   private normalizeForCompare(value: string): string {
     return String(value || '')
       .trim()

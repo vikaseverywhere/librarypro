@@ -145,5 +145,27 @@ export class LibraryService {
       city: city ?? this.authService.currentUserProfileValue?.city
     });
   }
+
+  async deleteLibrary(libraryId: string): Promise<void> {
+    const profile = await this.getCurrentProfile();
+
+    if (profile.libraryId === libraryId) {
+      throw new Error('Cannot delete the active library. Switch to another library first.');
+    }
+
+    const ids = this.getOwnedLibraryIds(profile);
+    if (ids.length <= 1) {
+      throw new Error('Cannot delete your only library.');
+    }
+
+    // Remove library doc from Firestore
+    await this.firestore.collection('libraries').doc(libraryId).delete();
+
+    // Remove libraryId from user's libraryIds array
+    const updatedIds = ids.filter(id => id !== libraryId);
+    await this.authService.updateCurrentUserProfile({
+      libraryIds: updatedIds
+    });
+  }
 }
 

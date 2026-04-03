@@ -92,65 +92,119 @@
         <p>Try adjusting your search terms</p>
       </div>
 
-      <div *ngIf="!isLoading && filteredStudents.length > 0" class="student-cards">
-        <div class="student-card" *ngFor="let student of filteredStudents">
-          <div class="student-header">
-            <div class="student-avatar">
-              <img *ngIf="student.photoUrl" [src]="student.photoUrl" alt="{{ student.name }} photo" />
+      <!-- Compact Student List -->
+      <div *ngIf="!isLoading && pagedStudents.length > 0" class="student-list-compact">
+        <!-- Table Header -->
+        <div class="list-header">
+          <span class="col-avatar"></span>
+          <span class="col-name">Name</span>
+          <span class="col-seat">Seat</span>
+          <span class="col-phone">Phone</span>
+          <span class="col-fee">Pending</span>
+          <span class="col-actions">Actions</span>
+        </div>
+
+        <!-- Student Rows -->
+        <div class="list-row" *ngFor="let student of pagedStudents" (click)="onOpenStudentProfile(student)">
+          <div class="col-avatar">
+            <div class="student-avatar-sm">
+              <img *ngIf="student.photoUrl" [src]="student.photoUrl" [alt]="student.name" />
               <span *ngIf="!student.photoUrl">{{ getInitials(student.name) }}</span>
             </div>
-            <div class="student-info">
-              <h3>{{ student.name }}</h3>
-              <p class="roll">ID: {{ student.studentId }}</p>
-              <p class="roll" *ngIf="viewMode === 'inactive' && student.inactiveAt">
-                Inactive since {{ student.inactiveAt | date:'MMM d, y' }}
-              </p>
-            </div>
-            <div class="student-actions">
-              <ion-button fill="clear" size="small" (click)="onOpenStudentProfile(student)">
-                <ion-icon name="person-circle-outline"></ion-icon>
-              </ion-button>
-              <ion-button *ngIf="viewMode === 'active'" fill="clear" size="small" [routerLink]="['/students/edit', student.studentId]">
-                <ion-icon name="create-outline"></ion-icon>
-              </ion-button>
-              <ion-button *ngIf="viewMode === 'active'" fill="clear" size="small" color="danger" (click)="onDeleteStudent(student)">
-                <ion-icon name="trash-outline"></ion-icon>
-              </ion-button>
-              <ion-button *ngIf="viewMode === 'inactive'" fill="clear" size="small" color="success" (click)="onReactivateStudent(student)">
-                <ion-icon name="refresh-outline"></ion-icon>
-              </ion-button>
-            </div>
           </div>
-          <div class="student-details">
-            <div class="detail-item">
-              <ion-icon name="mail-outline"></ion-icon>
-              <span>{{ student.email }}</span>
-            </div>
-            <div class="detail-item">
-              <ion-icon name="call-outline"></ion-icon>
-              <span>{{ student.phone }}</span>
-            </div>
-            <div class="detail-item">
-              <ion-icon name="pricetag-outline"></ion-icon>
-              <span>
-                Pending: ₹{{ student.totalFeePending | number: '1.0-0' }}
-                <br/>
-                Paid: ₹{{ (student.totalFeePaid || 0) | number: '1.0-0' }}
-              </span>
-            </div>
-            <div class="detail-item">
-              <ion-icon name="grid-outline"></ion-icon>
-              <span>Seat: {{ student.seatNumber || 'Not assigned' }}</span>
-            </div>
+          <div class="col-name">
+            <span class="student-name">{{ student.name }}</span>
+            <span class="student-email">{{ student.email }}</span>
           </div>
-          <div class="student-status">
-            <span [class]="student.seatStatus === 'occupied' ? 'paid' : 'pending'">
-              {{ student.seatStatus | titlecase }}
+          <div class="col-seat">
+            <span class="seat-badge">{{ student.seatNumber || '-' }}</span>
+          </div>
+          <div class="col-phone">{{ student.phone }}</div>
+          <div class="col-fee">
+            <span [class.has-pending]="student.totalFeePending > 0">
+              ₹{{ student.totalFeePending | number: '1.0-0' }}
             </span>
+          </div>
+          <div class="col-actions" (click)="$event.stopPropagation()">
+            <ion-button fill="clear" size="small" (click)="onOpenStudentProfile(student)">
+              <ion-icon name="eye-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button *ngIf="viewMode === 'active'" fill="clear" size="small" [routerLink]="['/students/edit', student.studentId]">
+              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button *ngIf="viewMode === 'active'" fill="clear" size="small" color="danger" (click)="onDeleteStudent(student)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button *ngIf="viewMode === 'inactive'" fill="clear" size="small" color="success" (click)="onReactivateStudent(student)">
+              <ion-icon name="refresh-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button *ngIf="viewMode === 'inactive'" fill="clear" size="small" color="danger" (click)="onPermanentDeleteStudent(student)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" *ngIf="totalPages > 1">
+          <span class="page-info">Showing {{ showingFrom }}–{{ showingTo }} of {{ filteredStudents.length }}</span>
+          <div class="page-controls">
+            <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">«</button>
+            <button
+              *ngFor="let p of pageNumbers"
+              class="page-btn"
+              [class.active]="p === currentPage"
+              (click)="goToPage(p)">{{ p }}</button>
+            <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">»</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 </ion-content>
+
+<!-- Seat Map Reactivation Modal -->
+<div class="seat-map-modal-backdrop" *ngIf="showSeatMapModal" (click)="closeSeatMapModal()">
+  <div class="seat-map-modal" (click)="$event.stopPropagation()">
+    <div class="seat-modal-header">
+      <div>
+        <h2>Select a Seat</h2>
+        <p>Pick a seat to reactivate <strong>{{ reactivatingStudent?.name }}</strong></p>
+      </div>
+      <ion-button fill="clear" size="small" (click)="closeSeatMapModal()">
+        <ion-icon name="close" slot="icon-only"></ion-icon>
+      </ion-button>
+    </div>
+
+    <div class="seat-modal-body">
+      <app-seat-map
+        [totalSeats]="seatMapTotalSeats"
+        [occupiedSeats]="seatMapOccupiedSeats"
+        [mode]="'select'"
+        [selectedSeat]="selectedReactivationSeat"
+        [showNames]="true"
+        (seatSelected)="onSeatSelectedForReactivation($event)"
+      ></app-seat-map>
+    </div>
+
+    <div class="seat-modal-footer">
+      <span class="selected-seat-label" *ngIf="selectedReactivationSeat">
+        Seat <strong>#{{ selectedReactivationSeat }}</strong> selected
+      </span>
+      <span class="selected-seat-label" *ngIf="!selectedReactivationSeat">
+        Tap a vacant seat to select
+      </span>
+      <div class="seat-modal-actions">
+        <ion-button fill="outline" color="medium" (click)="closeSeatMapModal()">Cancel</ion-button>
+        <ion-button
+          [disabled]="!selectedReactivationSeat || isReactivating"
+          (click)="confirmReactivation()"
+        >
+          <ion-spinner *ngIf="isReactivating" name="crescent" slot="start"></ion-spinner>
+          Reactivate
+        </ion-button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </ion-page>

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { NavController, ToastController } from '@ionic/angular';
+import { NavController, ToastController, AlertController } from '@ionic/angular';
 import { firstValueFrom } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { AuthService, UserProfile } from '../../core/auth/auth.service';
@@ -20,6 +20,7 @@ export class LibrariesPage implements OnInit, OnDestroy {
   constructor(
     private navController: NavController,
     private toastController: ToastController,
+    private alertController: AlertController,
     private authService: AuthService,
     private libraryService: LibraryService
   ) {}
@@ -102,6 +103,55 @@ export class LibrariesPage implements OnInit, OnDestroy {
   getLibrarySeats(lib: Library): number {
     const v = lib.totalSeats ?? lib.seatCount;
     return Number(v ?? 0);
+  }
+
+  async onDeleteLibrary(lib: Library) {
+    if (lib.libraryId === this.activeLibraryId) {
+      const toast = await this.toastController.create({
+        message: 'Switch to another library before deleting this one.',
+        duration: 2500,
+        color: 'warning',
+        position: 'bottom'
+      });
+      await toast.present();
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: 'Delete Library',
+      message: `Are you sure you want to delete <strong>${lib.name}</strong>? This action cannot be undone.`,
+      buttons: [
+        { text: 'Cancel', role: 'cancel' },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: () => this.confirmDeleteLibrary(lib)
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  private async confirmDeleteLibrary(lib: Library) {
+    try {
+      await this.libraryService.deleteLibrary(lib.libraryId);
+      this.libraries = this.libraries.filter(l => l.libraryId !== lib.libraryId);
+      const toast = await this.toastController.create({
+        message: `"${lib.name}" deleted.`,
+        duration: 2200,
+        color: 'success',
+        position: 'bottom'
+      });
+      await toast.present();
+    } catch (error) {
+      const toast = await this.toastController.create({
+        message: error instanceof Error ? error.message : 'Failed to delete library.',
+        duration: 2600,
+        color: 'danger',
+        position: 'bottom'
+      });
+      await toast.present();
+    }
   }
 }
 

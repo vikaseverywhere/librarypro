@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { NavController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { StudentService, Student } from '../../../core/firestore/student.service';
@@ -31,8 +32,11 @@ export class CollectFeePage implements OnInit {
   isSaving = false;
   errorMessage = '';
 
+  private preSelectStudentId: string | null = null;
+
   constructor(
     private navController: NavController,
+    private route: ActivatedRoute,
     private studentService: StudentService,
     private feeService: FeeService,
     private feeStateService: FeeStateService
@@ -52,8 +56,21 @@ export class CollectFeePage implements OnInit {
   }
 
   async ionViewWillEnter() {
+    this.preSelectStudentId = this.route.snapshot.queryParamMap.get('studentId');
     this.reset();
     await this.loadStudents();
+    this.autoSelectIfNeeded();
+  }
+
+  private autoSelectIfNeeded() {
+    if (!this.preSelectStudentId) return;
+    const match = this.students.find(
+      s => s.studentId === this.preSelectStudentId || s.id === this.preSelectStudentId
+    );
+    if (match) {
+      this.selectStudent(match);
+    }
+    this.preSelectStudentId = null;
   }
 
   private reset() {

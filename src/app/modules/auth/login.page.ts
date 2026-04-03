@@ -12,6 +12,8 @@ import { AuthService } from '../../core/auth/auth.service';
 export class LoginPage implements OnInit {
   loginForm!: FormGroup;
   isLoading = false;
+  showVerifyBanner = false;
+  isResendingVerification = false;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -32,6 +34,7 @@ export class LoginPage implements OnInit {
     if (this.loginForm) {
       this.loginForm.reset();
     }
+    this.showVerifyBanner = false;
   }
 
   async onLogin() {
@@ -41,6 +44,7 @@ export class LoginPage implements OnInit {
     }
 
     this.isLoading = true;
+    this.showVerifyBanner = false;
     const loading = await this.loadingController.create({
       message: 'Logging in...'
     });
@@ -50,6 +54,15 @@ export class LoginPage implements OnInit {
       const { email, password } = this.loginForm.value;
       await this.authService.login(email, password);
 
+      // Reload to get fresh emailVerified status from Firebase
+      const verified = await this.authService.reloadUser();
+      if (!verified) {
+        await loading.dismiss();
+        this.showVerifyBanner = true;
+        this.showError('Please verify your email first. Check your inbox.');
+        return;
+      }
+
       await loading.dismiss();
       await this.router.navigate(['/dashboard'], { replaceUrl: true });
     } catch (error: any) {
@@ -57,6 +70,24 @@ export class LoginPage implements OnInit {
       this.showError(error.message || 'Login failed');
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  async resendVerification() {
+    this.isResendingVerification = true;
+    try {
+      await this.authService.resendVerificationEmail();
+      const toast = await this.toastController.create({
+        message: 'Verification email sent! Check your inbox.',
+        duration: 3000,
+        position: 'bottom',
+        color: 'success'
+      });
+      await toast.present();
+    } catch (e: any) {
+      this.showError('Failed to resend verification email.');
+    } finally {
+      this.isResendingVerification = false;
     }
   }
 

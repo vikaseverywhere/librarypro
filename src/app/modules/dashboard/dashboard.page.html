@@ -19,11 +19,11 @@
       </div>
     </ion-title>
     <ion-buttons slot="end">
-      <div class="toolbar-avatar" *ngIf="libraryPhotoUrl">
-        <img [src]="libraryPhotoUrl" alt="Library photo" />
-      </div>
-      <div class="toolbar-avatar" *ngIf="!libraryPhotoUrl && ownerPhotoUrl">
+      <div class="toolbar-avatar" *ngIf="ownerPhotoUrl">
         <img [src]="ownerPhotoUrl" alt="Owner photo" />
+      </div>
+      <div class="toolbar-avatar" *ngIf="!ownerPhotoUrl && libraryPhotoUrl">
+        <img [src]="libraryPhotoUrl" alt="Library photo" />
       </div>
       <ion-button fill="clear" (click)="navigateToLibraries()">
         <ion-icon name="business-outline"></ion-icon>
@@ -116,17 +116,25 @@
     </div>
 
     <!-- Seat Map -->
-    <div class="info-section">
-      <div class="info-card">
-        <div class="info-header">
-          <ion-icon name="grid-outline"></ion-icon>
-          <h3>Seat Map</h3>
+    <div class="seat-map-section">
+      <div class="seat-map-card">
+        <div class="seat-map-header">
+          <div class="seat-map-header-left">
+            <div class="seat-map-icon-wrap">
+              <ion-icon name="grid-outline"></ion-icon>
+            </div>
+            <div>
+              <h3>Seat Map</h3>
+              <p class="seat-map-subtitle">Live occupancy overview</p>
+            </div>
+          </div>
         </div>
         <app-seat-map
           [totalSeats]="stats.totalCapacity"
           [occupiedSeats]="occupiedSeatData"
           mode="view"
           [showNames]="true"
+          (seatTapped)="onOccupiedSeatTapped($event)"
         ></app-seat-map>
       </div>
     </div>
@@ -167,6 +175,125 @@
             <span class="label">Available:</span>
             <span class="value available">{{ stats.vacantSeats }} seats</span>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Detail Modal -->
+  <div class="student-modal-backdrop" *ngIf="modalStudent" (click)="closeStudentModal()">
+    <div class="student-modal" (click)="$event.stopPropagation()">
+      <!-- Modal Handle -->
+      <div class="modal-handle-bar"><div class="modal-handle"></div></div>
+
+      <!-- Loading state -->
+      <div *ngIf="isLoadingModal" class="modal-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+        <span>Loading student details...</span>
+      </div>
+
+      <!-- Content -->
+      <div *ngIf="!isLoadingModal && modalStudent" class="modal-content">
+        <!-- Header with photo -->
+        <div class="modal-header-section">
+          <button class="modal-close-btn" (click)="closeStudentModal()">
+            <ion-icon name="close"></ion-icon>
+          </button>
+          <div class="modal-photo-wrap">
+            <img *ngIf="modalStudent.photoUrl" [src]="modalStudent.photoUrl" alt="Student photo" class="modal-photo" />
+            <div *ngIf="!modalStudent.photoUrl" class="modal-photo-placeholder">
+              <ion-icon name="person"></ion-icon>
+            </div>
+            <div class="modal-seat-badge">Seat {{ modalStudent.seatNumber }}</div>
+          </div>
+          <h2 class="modal-student-name">{{ modalStudent.name }}</h2>
+          <span class="modal-student-id">{{ modalStudent.studentId }}</span>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="modal-info-grid">
+          <div class="modal-info-item">
+            <div class="info-item-icon blue"><ion-icon name="call-outline"></ion-icon></div>
+            <div class="info-item-data">
+              <span class="info-label">Phone</span>
+              <span class="info-value">{{ modalStudent.phone || '—' }}</span>
+            </div>
+          </div>
+          <div class="modal-info-item">
+            <div class="info-item-icon purple"><ion-icon name="mail-outline"></ion-icon></div>
+            <div class="info-item-data">
+              <span class="info-label">Email</span>
+              <span class="info-value">{{ modalStudent.email || '—' }}</span>
+            </div>
+          </div>
+          <div class="modal-info-item">
+            <div class="info-item-icon teal"><ion-icon name="person-outline"></ion-icon></div>
+            <div class="info-item-data">
+              <span class="info-label">Father's Name</span>
+              <span class="info-value">{{ modalStudent.fatherName || '—' }}</span>
+            </div>
+          </div>
+          <div class="modal-info-item">
+            <div class="info-item-icon orange"><ion-icon name="card-outline"></ion-icon></div>
+            <div class="info-item-data">
+              <span class="info-label">Aadhaar</span>
+              <span class="info-value">{{ modalStudent.adharNumber || '—' }}</span>
+            </div>
+          </div>
+          <div class="modal-info-item">
+            <div class="info-item-icon green"><ion-icon name="document-text-outline"></ion-icon></div>
+            <div class="info-item-data">
+              <span class="info-label">Plan</span>
+              <span class="info-value">{{ modalStudent.planName || 'No plan' }}</span>
+            </div>
+          </div>
+          <div class="modal-info-item">
+            <div class="info-item-icon blue"><ion-icon name="cash-outline"></ion-icon></div>
+            <div class="info-item-data">
+              <span class="info-label">Monthly Fee</span>
+              <span class="info-value">₹{{ modalStudent.monthlyFee || 0 | number:'1.0-0' }}</span>
+            </div>
+          </div>
+          <div class="modal-info-item">
+            <div class="info-item-icon red"><ion-icon name="alert-circle-outline"></ion-icon></div>
+            <div class="info-item-data">
+              <span class="info-label">Pending Fees</span>
+              <span class="info-value fee-pending">₹{{ modalStudent.totalFeePending || 0 | number:'1.0-0' }}</span>
+            </div>
+          </div>
+          <div class="modal-info-item">
+            <div class="info-item-icon green"><ion-icon name="checkmark-circle-outline"></ion-icon></div>
+            <div class="info-item-data">
+              <span class="info-label">Fees Paid</span>
+              <span class="info-value fee-paid">₹{{ modalStudent.totalFeePaid || 0 | number:'1.0-0' }}</span>
+            </div>
+          </div>
+          <div class="modal-info-item">
+            <div class="info-item-icon teal"><ion-icon name="calendar-outline"></ion-icon></div>
+            <div class="info-item-data">
+              <span class="info-label">Enrolled</span>
+              <span class="info-value">{{ modalStudent.enrollmentDate | date:'mediumDate' }}</span>
+            </div>
+          </div>
+          <div class="modal-info-item" *ngIf="modalStudent.addressLine1">
+            <div class="info-item-icon purple"><ion-icon name="location-outline"></ion-icon></div>
+            <div class="info-item-data">
+              <span class="info-label">Address</span>
+              <span class="info-value">{{ modalStudent.addressLine1 }}{{ modalStudent.city ? ', ' + modalStudent.city : '' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-actions">
+          <button class="modal-action-btn primary" (click)="modalViewProfile()">
+            <ion-icon name="eye-outline"></ion-icon>
+            View Full Profile
+          </button>
+          <button class="modal-action-btn success" (click)="modalCollectFee()">
+            <ion-icon name="card-outline"></ion-icon>
+            Collect Fee
+          </button>
         </div>
       </div>
     </div>

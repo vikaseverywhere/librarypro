@@ -10,10 +10,23 @@
 <ion-content >
   <div class="settings-header">
     <div class="profile-section">
-      <div class="profile-avatar">
-        <img *ngIf="libraryPhotoUrl" [src]="libraryPhotoUrl" alt="Library photo" />
-        <img *ngIf="!libraryPhotoUrl && ownerPhotoUrl" [src]="ownerPhotoUrl" alt="Owner photo" />
-        <span *ngIf="!libraryPhotoUrl && !ownerPhotoUrl">{{ getInitials(libraryName) }}</span>
+      <div class="dual-avatar-row">
+        <!-- Library Photo -->
+        <div class="avatar-block">
+          <div class="profile-avatar library-avatar">
+            <img *ngIf="libraryPhotoUrl" [src]="libraryPhotoUrl" alt="Library photo" />
+            <ion-icon *ngIf="!libraryPhotoUrl" name="business-outline"></ion-icon>
+          </div>
+          <small class="avatar-label">Library</small>
+        </div>
+        <!-- Owner Photo -->
+        <div class="avatar-block">
+          <div class="profile-avatar owner-avatar">
+            <img *ngIf="ownerPhotoUrl" [src]="ownerPhotoUrl" alt="Owner photo" />
+            <ion-icon *ngIf="!ownerPhotoUrl" name="person-outline"></ion-icon>
+          </div>
+          <small class="avatar-label">Owner</small>
+        </div>
       </div>
       <h1>{{ libraryName }}</h1>
       <p class="profile-subtitle">Library Administrator</p>

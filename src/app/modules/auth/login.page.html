@@ -46,6 +46,18 @@
         </ion-button>
       </form>
 
+      <!-- Email not verified banner -->
+      <div *ngIf="showVerifyBanner" style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:12px; margin-top:12px; text-align:center;">
+        <p style="margin:0 0 8px; color:#856404; font-size:14px;">
+          <ion-icon name="warning-outline"></ion-icon>
+          Your email is not verified yet. Check your inbox and click the verification link.
+        </p>
+        <ion-button fill="clear" size="small" [disabled]="isResendingVerification" (click)="resendVerification()">
+          <ion-icon name="mail-outline" slot="start"></ion-icon>
+          Resend Verification Email
+        </ion-button>
+      </div>
+
       <p class="auth-switch">
         Don’t have an account?
         <ion-router-link routerLink="/auth/signup" routerDirection="forward">Sign Up</ion-router-link>

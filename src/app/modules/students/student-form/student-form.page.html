@@ -69,9 +69,14 @@
           type="tel" 
           [(ngModel)]="formData.phone"
           name="phone"
-          placeholder="Enter phone number">
+          maxlength="10"
+          inputmode="numeric"
+          placeholder="10-digit phone number">
         </ion-input>
       </ion-item>
+      <ion-text *ngIf="formData.phone && !isPhoneValid()" color="danger" style="font-size:0.8rem; padding-left:16px;">
+        Phone must be exactly 10 digits.
+      </ion-text>
 
       <div *ngIf="totalSeats > 0" style="margin: 0.5rem 0 1rem;">
         <div style="font-weight: 800; color:#1e3a5f; margin-bottom: 0.5rem;">
@@ -113,6 +118,9 @@
           placeholder="12-digit Aadhaar"
         ></ion-input>
       </ion-item>
+      <ion-text *ngIf="formData.adharNumber && !isAadhaarValid()" color="danger" style="font-size:0.8rem; padding-left:16px;">
+        Aadhaar must be exactly 12 digits.
+      </ion-text>
 
       <div *ngIf="plans.length > 0" style="margin: 0.5rem 0 1rem;">
         <div style="font-weight: 800; color:#1e3a5f; margin-bottom: 0.5rem;">Select Plan</div>

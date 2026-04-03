@@ -82,3 +82,120 @@
   color: #1361ba;
   font-weight: 700;
 }
+
+/* ═══════════════════════════════════════════
+   OTP Verification Step
+   ═══════════════════════════════════════════ */
+
+.otp-step {
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.otp-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+
+  ion-icon {
+    font-size: 28px;
+    color: #2563eb;
+  }
+}
+
+.otp-step h2 {
+  margin: 0 0 0.5rem;
+  color: #1e3a5f;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.otp-subtitle {
+  margin: 0 0 1.5rem;
+  color: #637898;
+  font-size: 0.9rem;
+  line-height: 1.5;
+
+  strong {
+    color: #2b7cd4;
+  }
+}
+
+.otp-input-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+}
+
+.otp-box {
+  width: 48px;
+  height: 56px;
+  --background: #f8fbff;
+  --color: #1e3a5f;
+  --padding-start: 0;
+  --padding-end: 0;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  border: 2px solid #c8d9f4;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+
+  &.filled {
+    border-color: #2b7cd4;
+    background: #eef4fb;
+    box-shadow: 0 0 0 3px rgba(43, 124, 212, 0.1);
+  }
+
+  &.error {
+    border-color: #ef4444;
+    animation: otpShake 0.4s ease;
+  }
+}
+
+@keyframes otpShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.otp-error {
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: -0.5rem 0 1rem;
+}
+
+.verify-btn {
+  --border-radius: 12px;
+  --background: linear-gradient(135deg, #2b7cd4 0%, #2266c5 100%);
+  --color: #fff;
+  height: 52px;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.resend-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  min-height: 36px;
+}
+
+.resend-timer {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.back-link {
+  --color: #637898;
+  font-size: 0.82rem;
+}

@@ -4,7 +4,7 @@ import { AlertController, NavController, ToastController } from '@ionic/angular'
 import { Subscription, firstValueFrom } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { AuthService } from '../../core/auth/auth.service';
-import { StudentService } from '../../core/firestore/student.service';
+import { StudentService, Student } from '../../core/firestore/student.service';
 import { FeeStateService } from '../../core/fee-state.service';
 import { LibraryStateService } from '../../core/library-state.service';
 import { FirestoreService } from '../../core/firestore/firestore.service';
@@ -44,6 +44,10 @@ export class DashboardPage implements OnInit, OnDestroy {
   capacityInput = '1';
   isSavingCapacity = false;
   occupiedSeatData: SeatInfo[] = [];
+
+  // Student detail modal
+  modalStudent: Student | null = null;
+  isLoadingModal = false;
 
   private seatsSub?: Subscription;
   private feeStatsSub?: Subscription;
@@ -238,6 +242,58 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   onQuickViewStudents() {
     this.navController.navigateForward('/students');
+  }
+
+  onSeatViewProfile(seat: SeatInfo) {
+    if (seat.studentId) {
+      this.navController.navigateForward(`/students/profile/${seat.studentId}`);
+    }
+  }
+
+  onSeatCollectFee(seat: SeatInfo) {
+    if (seat.studentId) {
+      this.navController.navigateForward(`/fees/collect`, {
+        queryParams: { studentId: seat.studentId }
+      });
+    }
+  }
+
+  async onOccupiedSeatTapped(seat: SeatInfo) {
+    if (!seat.studentId) return;
+    this.isLoadingModal = true;
+    this.modalStudent = { studentId: seat.studentId, name: seat.studentName || 'Student' } as Student;
+    try {
+      const student = await this.studentService.getStudent(seat.studentId);
+      if (student) {
+        this.modalStudent = student;
+      }
+    } catch (err) {
+      console.error('Failed to load student:', err);
+    } finally {
+      this.isLoadingModal = false;
+    }
+  }
+
+  closeStudentModal() {
+    this.modalStudent = null;
+  }
+
+  modalViewProfile() {
+    const id = this.modalStudent?.studentId;
+    if (id) {
+      this.closeStudentModal();
+      this.navController.navigateForward(`/students/profile/${id}`);
+    }
+  }
+
+  modalCollectFee() {
+    const id = this.modalStudent?.studentId;
+    if (id) {
+      this.closeStudentModal();
+      this.navController.navigateForward(`/fees/collect`, {
+        queryParams: { studentId: id }
+      });
+    }
   }
 
   async onLogout() {

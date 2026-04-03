@@ -1,122 +1,181 @@
 <ion-header >
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/auth/login"></ion-back-button>
+      <ion-back-button *ngIf="step === 'form'" defaultHref="/auth/login"></ion-back-button>
+      <ion-button *ngIf="step === 'verify'" fill="clear" (click)="goBackToForm()">
+        <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+      </ion-button>
     </ion-buttons>
-    <ion-title>Create Account</ion-title>
+    <ion-title>{{ step === 'form' ? 'Create Account' : 'Verify Email' }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content >
   <div class="auth-page">
     <div class="auth-card">
-      <div class="branding">
-        <ion-icon name="book-outline" size="large"></ion-icon>
-        <h1>LibraryPro</h1>
-        <p>Create your free account</p>
+
+      <!-- ═══ STEP 1: SIGNUP FORM ═══ -->
+      <div *ngIf="step === 'form'">
+        <div class="branding">
+          <ion-icon name="book-outline" size="large"></ion-icon>
+          <h1>LibraryPro</h1>
+          <p>Create your free account</p>
+        </div>
+
+        <form [formGroup]="signupForm" class="auth-form">
+          <ion-item>
+            <ion-label position="floating">Library Name</ion-label>
+            <ion-input
+              type="text"
+              formControlName="libraryName"
+              [class.ion-invalid]="libraryName?.invalid && libraryName?.touched"
+            ></ion-input>
+          </ion-item>
+          <ion-text *ngIf="libraryName?.invalid && libraryName?.touched" color="danger" class="inline-error">
+            <small *ngIf="libraryName?.errors?.['required']">Library name is required</small>
+            <small *ngIf="libraryName?.errors?.['minlength']">Library name must be at least 3 characters</small>
+          </ion-text>
+
+          <ion-item>
+            <ion-label position="floating">City</ion-label>
+            <ion-input
+              type="text"
+              formControlName="city"
+              [class.ion-invalid]="city?.invalid && city?.touched"
+            ></ion-input>
+          </ion-item>
+          <ion-text *ngIf="city?.invalid && city?.touched" color="danger" class="inline-error">
+            <small *ngIf="city?.errors?.['required']">City is required</small>
+          </ion-text>
+
+          <ion-item>
+            <ion-label position="floating">Total Seats Capacity</ion-label>
+            <ion-input
+              type="number"
+              formControlName="totalSeats"
+              min="1"
+              [class.ion-invalid]="totalSeats?.invalid && totalSeats?.touched"
+            ></ion-input>
+          </ion-item>
+          <div style="margin: 0.6rem 0 0.2rem; font-weight: 700; color: #1e3a5f;">
+            Photos (optional)
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.6rem; margin-bottom: 0.5rem;">
+            <div>
+              <small style="color:#637898; font-weight:700;">Owner Photo</small>
+              <input type="file" accept="image/*" (change)="onOwnerPhotoSelected($event)" />
+            </div>
+            <div>
+              <small style="color:#637898; font-weight:700;">Library Photo</small>
+              <input type="file" accept="image/*" (change)="onLibraryPhotoSelected($event)" />
+            </div>
+          </div>
+          <ion-text *ngIf="totalSeats?.invalid && totalSeats?.touched" color="danger" class="inline-error">
+            <small *ngIf="totalSeats?.errors?.['required']">Total seats is required</small>
+            <small *ngIf="totalSeats?.errors?.['min']">Total seats must be at least 1</small>
+          </ion-text>
+
+          <ion-item>
+            <ion-label position="floating">Email</ion-label>
+            <ion-input
+              type="email"
+              formControlName="email"
+              [class.ion-invalid]="email?.invalid && email?.touched"
+            ></ion-input>
+          </ion-item>
+          <ion-text *ngIf="email?.invalid && email?.touched" color="danger" class="inline-error">
+            <small *ngIf="email?.errors?.['required']">Email is required</small>
+            <small *ngIf="email?.errors?.['email']">Please enter a valid email</small>
+          </ion-text>
+
+          <ion-item>
+            <ion-label position="floating">Password</ion-label>
+            <ion-input
+              type="password"
+              formControlName="password"
+              [class.ion-invalid]="password?.invalid && password?.touched"
+            ></ion-input>
+          </ion-item>
+          <ion-text *ngIf="password?.invalid && password?.touched" color="danger" class="inline-error">
+            <small *ngIf="password?.errors?.['required']">Password is required</small>
+            <small *ngIf="password?.errors?.['minlength']">Password must be at least 6 characters</small>
+          </ion-text>
+
+          <ion-item>
+            <ion-label position="floating">Confirm Password</ion-label>
+            <ion-input
+              type="password"
+              formControlName="confirmPassword"
+              [class.ion-invalid]="confirmPassword?.invalid && confirmPassword?.touched"
+            ></ion-input>
+          </ion-item>
+          <ion-text *ngIf="signupForm.get('confirmPassword')?.touched" color="danger" class="inline-error">
+            <small *ngIf="signupForm.errors?.['passwordMismatch']">Passwords do not match</small>
+          </ion-text>
+
+          <ion-button expand="block" [disabled]="signupForm.invalid || isLoading" (click)="onFormSubmit()">
+            <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+            <span *ngIf="!isLoading">Create Account</span>
+          </ion-button>
+        </form>
+
+        <p class="auth-switch">
+          Already have an account?
+          <ion-router-link routerLink="/auth/login" routerDirection="back">Login</ion-router-link>
+        </p>
       </div>
 
-      <form [formGroup]="signupForm" class="auth-form">
-        <ion-item>
-          <ion-label position="floating">Library Name</ion-label>
-          <ion-input
-            type="text"
-            formControlName="libraryName"
-            [class.ion-invalid]="libraryName?.invalid && libraryName?.touched"
-          ></ion-input>
-        </ion-item>
-        <ion-text *ngIf="libraryName?.invalid && libraryName?.touched" color="danger" class="inline-error">
-          <small *ngIf="libraryName?.errors?.['required']">Library name is required</small>
-          <small *ngIf="libraryName?.errors?.['minlength']">Library name must be at least 3 characters</small>
-        </ion-text>
-
-        <ion-item>
-          <ion-label position="floating">City</ion-label>
-          <ion-input
-            type="text"
-            formControlName="city"
-            [class.ion-invalid]="city?.invalid && city?.touched"
-          ></ion-input>
-        </ion-item>
-        <ion-text *ngIf="city?.invalid && city?.touched" color="danger" class="inline-error">
-          <small *ngIf="city?.errors?.['required']">City is required</small>
-        </ion-text>
-
-        <ion-item>
-          <ion-label position="floating">Total Seats Capacity</ion-label>
-          <ion-input
-            type="number"
-            formControlName="totalSeats"
-            min="1"
-            [class.ion-invalid]="totalSeats?.invalid && totalSeats?.touched"
-          ></ion-input>
-        </ion-item>
-        <div style="margin: 0.6rem 0 0.2rem; font-weight: 700; color: #1e3a5f;">
-          Photos (optional)
+      <!-- ═══ STEP 2: EMAIL VERIFICATION ═══ -->
+      <div *ngIf="step === 'verify'" class="otp-step">
+        <div class="otp-icon-wrap">
+          <ion-icon name="mail-outline"></ion-icon>
         </div>
-        <div style="display:flex; flex-direction:column; gap:0.6rem; margin-bottom: 0.5rem;">
-          <div>
-            <small style="color:#637898; font-weight:700;">Owner Photo</small>
-            <input type="file" accept="image/*" (change)="onOwnerPhotoSelected($event)" />
-          </div>
-          <div>
-            <small style="color:#637898; font-weight:700;">Library Photo</small>
-            <input type="file" accept="image/*" (change)="onLibraryPhotoSelected($event)" />
-          </div>
-        </div>
-        <ion-text *ngIf="totalSeats?.invalid && totalSeats?.touched" color="danger" class="inline-error">
-          <small *ngIf="totalSeats?.errors?.['required']">Total seats is required</small>
-          <small *ngIf="totalSeats?.errors?.['min']">Total seats must be at least 1</small>
-        </ion-text>
+        <h2>Verify Your Email</h2>
+        <p class="otp-subtitle">
+          We sent a verification link to<br>
+          <strong>{{ signupForm.value.email }}</strong>
+        </p>
+        <p style="color:#637898; font-size:14px; text-align:center; margin: 8px 16px;">
+          Open your email and click the verification link, then tap the button below.
+          <br><strong style="color:#e65100;">Always click the link in the LATEST email.</strong>
+          <br><small>Check spam folder if you don't see it.</small>
+        </p>
 
-        <ion-item>
-          <ion-label position="floating">Email</ion-label>
-          <ion-input
-            type="email"
-            formControlName="email"
-            [class.ion-invalid]="email?.invalid && email?.touched"
-          ></ion-input>
-        </ion-item>
-        <ion-text *ngIf="email?.invalid && email?.touched" color="danger" class="inline-error">
-          <small *ngIf="email?.errors?.['required']">Email is required</small>
-          <small *ngIf="email?.errors?.['email']">Please enter a valid email</small>
-        </ion-text>
-
-        <ion-item>
-          <ion-label position="floating">Password</ion-label>
-          <ion-input
-            type="password"
-            formControlName="password"
-            [class.ion-invalid]="password?.invalid && password?.touched"
-          ></ion-input>
-        </ion-item>
-        <ion-text *ngIf="password?.invalid && password?.touched" color="danger" class="inline-error">
-          <small *ngIf="password?.errors?.['required']">Password is required</small>
-          <small *ngIf="password?.errors?.['minlength']">Password must be at least 6 characters</small>
-        </ion-text>
-
-        <ion-item>
-          <ion-label position="floating">Confirm Password</ion-label>
-          <ion-input
-            type="password"
-            formControlName="confirmPassword"
-            [class.ion-invalid]="confirmPassword?.invalid && confirmPassword?.touched"
-          ></ion-input>
-        </ion-item>
-        <ion-text *ngIf="signupForm.get('confirmPassword')?.touched" color="danger" class="inline-error">
-          <small *ngIf="signupForm.errors?.['passwordMismatch']">Passwords do not match</small>
-        </ion-text>
-
-        <ion-button expand="block" [disabled]="signupForm.invalid || isLoading" (click)="onSignup()">
-          <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
-          <span *ngIf="!isLoading">Create Account</span>
+        <ion-button
+          expand="block"
+          (click)="checkVerified()"
+          class="verify-btn"
+        >
+          I've Verified My Email
         </ion-button>
-      </form>
 
-      <p class="auth-switch">
-        Already have an account?
-        <ion-router-link routerLink="/auth/login" routerDirection="back">Login</ion-router-link>
-      </p>
+        <p style="color:#637898; font-size:12px; text-align:center; margin-top:8px;">
+          <ion-spinner name="dots" style="width:16px; height:16px; vertical-align:middle;"></ion-spinner>
+          Auto-checking verification status...
+        </p>
+
+        <div class="resend-row">
+          <span *ngIf="resendCooldown > 0" class="resend-timer">
+            Resend in {{ resendCooldown }}s
+          </span>
+          <ion-button
+            *ngIf="resendCooldown <= 0"
+            fill="clear"
+            size="small"
+            [disabled]="isResending"
+            (click)="resendEmail()"
+          >
+            <ion-icon name="refresh-outline" slot="start"></ion-icon>
+            Resend Verification Email
+          </ion-button>
+        </div>
+
+        <ion-button fill="clear" size="small" (click)="goBackToForm()" class="back-link">
+          <ion-icon name="arrow-back-outline" slot="start"></ion-icon>
+          Change email or details
+        </ion-button>
+      </div>
+
     </div>
   </div>
 </ion-content>

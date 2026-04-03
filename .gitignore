@@ -11,6 +11,11 @@ node_modules/
 .env
 .env.local
 
+# Firebase Functions build output & env
+firebase/functions/lib/
+firebase/functions/.env
+firebase/functions/node_modules/
+
 # Environment files with real secrets — never commit these
 src/environments/environment.ts
 src/environments/environment.prod.ts

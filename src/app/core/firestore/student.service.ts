@@ -188,6 +188,10 @@ export class StudentService {
     } as any);
   }
 
+  async permanentDeleteStudent(studentId: string): Promise<void> {
+    return this.firestoreService.delete('students', studentId);
+  }
+
   async reactivateStudent(studentId: string, data: Partial<Student>): Promise<void> {
     if (typeof data.seatNumber === 'number' && data.seatNumber >= 1) {
       const taken = await this.isSeatNumberTaken(data.seatNumber, studentId);

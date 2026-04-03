@@ -80,6 +80,10 @@ export class AuthService {
       const userCredential = await this.afAuth.createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
       if (!user) throw new Error('User creation failed');
+
+      // Send Firebase's free email verification link
+      await user.sendEmailVerification();
+
       const uid = user.uid;
 
       // Generate libraryId
@@ -210,5 +214,36 @@ export class AuthService {
 
   get isAuthenticatedValue(): boolean {
     return this.isAuthenticated$.value;
+  }
+
+  /** True when the current Firebase user has clicked the verification link. */
+  get isEmailVerified(): boolean {
+    return this.currentUser$.value?.emailVerified ?? false;
+  }
+
+  /** Re-sends the Firebase verification email (free, no Cloud Function). */
+  async resendVerificationEmail(): Promise<void> {
+    const firebaseUser = await this.afAuth.currentUser;
+    if (firebaseUser) {
+      await firebaseUser.reload();
+      if (!firebaseUser.emailVerified) {
+        await firebaseUser.sendEmailVerification();
+      }
+    }
+  }
+
+  /** Reload the Firebase user to pick up a newly-verified email flag. */
+  async reloadUser(): Promise<boolean> {
+    const firebaseUser = await this.afAuth.currentUser;
+    if (firebaseUser) {
+      await firebaseUser.reload();
+      // After reload, get fresh reference from Firebase Auth
+      const refreshed = await this.afAuth.currentUser;
+      if (refreshed) {
+        this.currentUser$.next(refreshed);
+        return refreshed.emailVerified;
+      }
+    }
+    return false;
   }
 }

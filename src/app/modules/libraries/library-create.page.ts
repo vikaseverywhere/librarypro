@@ -3,8 +3,7 @@ import { NavController, ToastController } from '@ionic/angular';
 import { LibraryService } from '../../core/firestore/library.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { compressImageToJpeg } from '../../core/utils/image-compress';
+import { PhotoUploadService } from '../../core/photo-upload.service';
 
 @Component({
   selector: 'app-library-create',
@@ -24,7 +23,8 @@ export class LibraryCreatePage implements OnInit {
     private toastController: ToastController,
     private libraryService: LibraryService,
     private authService: AuthService,
-    private firestore: AngularFirestore
+    private firestore: AngularFirestore,
+    private photoUploadService: PhotoUploadService
   ) {}
 
   ngOnInit() {}
@@ -61,18 +61,14 @@ export class LibraryCreatePage implements OnInit {
         monthlyFee: fee
       });
 
-      // Upload optional library photo (compressed)
+      // Upload optional library photo (compressed to data URL, stored in Firestore)
       if (this.libraryPhotoFile) {
-        const profile = this.authService.currentUserProfileValue;
-        const uid = profile?.uid;
-        if (uid) {
-          const storage = getStorage();
-          const blob = await compressImageToJpeg(this.libraryPhotoFile, { maxSizePx: 900, quality: 0.72 });
-          const ref = storageRef(storage, `userUploads/${uid}/libraries/${libraryId}/library.jpg`);
-          await uploadBytes(ref, blob);
-          const url = await getDownloadURL(ref);
-          await this.firestore.doc(`libraries/${libraryId}`).set({ photoUrl: url, updatedAt: new Date() }, { merge: true });
-        }
+        const dataUrl = await this.photoUploadService.compressToDataUrl(
+          this.libraryPhotoFile, { maxSizePx: 900, quality: 0.72 }
+        );
+        await this.firestore.doc(`libraries/${libraryId}`).set(
+          { photoUrl: dataUrl, updatedAt: new Date() }, { merge: true }
+        );
       }
 
       await this.toast('Library created and set as active.', 'success');

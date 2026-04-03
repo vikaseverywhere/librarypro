@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LoadingController, ToastController } from '@ionic/angular';
@@ -11,11 +11,18 @@ import { PhotoUploadService } from '../../core/photo-upload.service';
   templateUrl: './signup.page.html',
   styleUrls: ['./signup.page.scss']
 })
-export class SignupPage implements OnInit {
+export class SignupPage implements OnInit, OnDestroy {
   signupForm!: FormGroup;
   isLoading = false;
   ownerPhotoFile: File | null = null;
   libraryPhotoFile: File | null = null;
+
+  // Email verification state
+  step: 'form' | 'verify' = 'form';
+  isResending = false;
+  resendCooldown = 0;
+  private cooldownTimer: any;
+  private pollTimer: any;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -48,6 +55,15 @@ export class SignupPage implements OnInit {
     } else {
       this.signupForm.reset();
     }
+    this.step = 'form';
+    this.resendCooldown = 0;
+    clearInterval(this.cooldownTimer);
+    this.stopPolling();
+  }
+
+  ngOnDestroy() {
+    clearInterval(this.cooldownTimer);
+    this.stopPolling();
   }
 
   passwordMatchValidator(group: FormGroup) {
@@ -56,7 +72,8 @@ export class SignupPage implements OnInit {
     return password === confirmPassword ? null : { passwordMismatch: true };
   }
 
-  async onSignup() {
+  // Create account then show "check your email" step
+  async onFormSubmit() {
     if (this.signupForm.invalid) {
       this.showError('Please fill all fields correctly');
       return;
@@ -69,43 +86,117 @@ export class SignupPage implements OnInit {
     await loading.present();
 
     try {
-      const { email, password, libraryName, city, totalSeats } = this.signupForm.value;
-
-      const profile = await this.authService.signup(
-        email,
-        password,
-        libraryName,
-        city,
-        Number(totalSeats)
-      );
-
-      // Compress and store photos as base64 in Firestore (no Storage needed)
-      const libraryId = profile.libraryId;
-      const uid = profile.uid;
-
-      if (this.ownerPhotoFile) {
-        const dataUrl = await this.photoUploadService.compressToDataUrl(
-          this.ownerPhotoFile, { maxSizePx: 720, quality: 0.7 }
-        );
-        await this.firestore.doc(`users/${uid}`).set({ photoUrl: dataUrl, updatedAt: new Date() }, { merge: true });
-      }
-
-      if (this.libraryPhotoFile) {
-        const dataUrl = await this.photoUploadService.compressToDataUrl(
-          this.libraryPhotoFile, { maxSizePx: 900, quality: 0.72 }
-        );
-        await this.firestore.doc(`libraries/${libraryId}`).set({ photoUrl: dataUrl, updatedAt: new Date() }, { merge: true });
-      }
-      
+      await this.createAccount();
       await loading.dismiss();
-      await this.showSuccess('Account created successfully!');
-      await this.router.navigate(['/dashboard'], { replaceUrl: true });
+      this.step = 'verify';
+      this.startResendCooldown();
+      this.startPolling();
     } catch (error: any) {
       await loading.dismiss();
       this.showError(error.message || 'Signup failed');
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private async createAccount() {
+    const { email, password, libraryName, city, totalSeats } = this.signupForm.value;
+
+    const profile = await this.authService.signup(
+      email,
+      password,
+      libraryName,
+      city,
+      Number(totalSeats)
+    );
+
+    const libraryId = profile.libraryId;
+    const uid = profile.uid;
+
+    if (this.ownerPhotoFile) {
+      const dataUrl = await this.photoUploadService.compressToDataUrl(
+        this.ownerPhotoFile, { maxSizePx: 720, quality: 0.7 }
+      );
+      await this.firestore.doc(`users/${uid}`).set({ photoUrl: dataUrl, updatedAt: new Date() }, { merge: true });
+    }
+
+    if (this.libraryPhotoFile) {
+      const dataUrl = await this.photoUploadService.compressToDataUrl(
+        this.libraryPhotoFile, { maxSizePx: 900, quality: 0.72 }
+      );
+      await this.firestore.doc(`libraries/${libraryId}`).set({ photoUrl: dataUrl, updatedAt: new Date() }, { merge: true });
+    }
+  }
+
+  private startResendCooldown() {
+    this.resendCooldown = 60;
+    clearInterval(this.cooldownTimer);
+    this.cooldownTimer = setInterval(() => {
+      this.resendCooldown--;
+      if (this.resendCooldown <= 0) {
+        clearInterval(this.cooldownTimer);
+      }
+    }, 1000);
+  }
+
+  async resendEmail() {
+    if (this.resendCooldown > 0) return;
+    this.isResending = true;
+    try {
+      await this.authService.resendVerificationEmail();
+      this.showSuccess('New verification email sent! Use only this latest link.');
+      this.startResendCooldown();
+    } catch (e: any) {
+      this.showError(e?.message || 'Failed to resend email.');
+    } finally {
+      this.isResending = false;
+    }
+  }
+
+  async checkVerified() {
+    const loading = await this.loadingController.create({ message: 'Checking...' });
+    await loading.present();
+    try {
+      const verified = await this.authService.reloadUser();
+      await loading.dismiss();
+      if (verified) {
+        this.stopPolling();
+        await this.showSuccess('Email verified! Redirecting...');
+        await this.router.navigate(['/dashboard'], { replaceUrl: true });
+      } else {
+        this.showError('Email not yet verified. Please click the LATEST link in your email.');
+      }
+    } catch (e: any) {
+      await loading.dismiss();
+      this.showError('Could not check verification status.');
+    }
+  }
+
+  private startPolling() {
+    this.stopPolling();
+    this.pollTimer = setInterval(async () => {
+      try {
+        const verified = await this.authService.reloadUser();
+        if (verified) {
+          this.stopPolling();
+          await this.showSuccess('Email verified! Redirecting...');
+          await this.router.navigate(['/dashboard'], { replaceUrl: true });
+        }
+      } catch (_) { /* silent */ }
+    }, 3000);
+  }
+
+  private stopPolling() {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+  }
+
+  goBackToForm() {
+    this.step = 'form';
+    clearInterval(this.cooldownTimer);
+    this.stopPolling();
   }
 
   onOwnerPhotoSelected(event: any) {

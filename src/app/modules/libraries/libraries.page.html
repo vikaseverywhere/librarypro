@@ -57,6 +57,16 @@
             style="margin-top: 10px;">
             Use this library
           </ion-button>
+          <ion-button
+            expand="block"
+            fill="outline"
+            color="danger"
+            (click)="onDeleteLibrary(lib)"
+            [disabled]="lib.libraryId === activeLibraryId || libraries.length <= 1"
+            style="margin-top: 6px;">
+            <ion-icon name="trash-outline" slot="start"></ion-icon>
+            Delete Library
+          </ion-button>
         </ion-card-content>
       </ion-card>
 
