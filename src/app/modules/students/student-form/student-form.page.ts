@@ -31,6 +31,8 @@ export class StudentFormPage implements OnInit, OnDestroy {
   totalSeats = 0;
   occupiedSeatData: SeatInfo[] = [];
   editingSeatNumber: number | null = null;
+  /** True when editing a student whose Aadhaar is already hashed (no plain text available). */
+  studentHasHashedAadhar = false;
 
   formData = {
     name: '',
@@ -110,13 +112,16 @@ export class StudentFormPage implements OnInit, OnDestroy {
         email: student.email || '',
         phone: student.phone || '',
         seatNumber: student.seatNumber ? String(student.seatNumber) : '',
-        adharNumber: student.adharNumber || '',
+        // If student has a hashed Aadhaar, leave field empty (user must re-enter to change it)
+        adharNumber: student.adharHash ? '' : (student.adharNumber || ''),
         addressLine1: (student as any).addressLine1 || '',
         addressLine2: (student as any).addressLine2 || '',
         city: (student as any).city || '',
         state: (student as any).state || '',
         pincode: (student as any).pincode || ''
       };
+      // Flag so form validation skips Aadhaar when user hasn't touched it in edit mode
+      this.studentHasHashedAadhar = !!student.adharHash;
 
       this.photoPreviewUrl = student.photoUrl || null;
       this.selectedPlanId = (student as any).planId || '';
@@ -151,6 +156,8 @@ export class StudentFormPage implements OnInit, OnDestroy {
     const seat = Number(this.formData.seatNumber);
     const adhar = String(this.formData.adharNumber || '').trim();
     const phone = String(this.formData.phone || '').trim();
+    // In edit mode, if student already has a hashed Aadhaar and user left field blank → valid (no change).
+    const adharValid = /^\d{12}$/.test(adhar) || (this.isEditMode && this.studentHasHashedAadhar && !adhar);
     return !!(
       this.formData.name &&
       this.formData.fatherName &&
@@ -160,7 +167,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
       this.formData.seatNumber &&
       Number.isInteger(seat) &&
       seat >= 1 &&
-      /^\d{12}$/.test(adhar) &&
+      adharValid &&
       (this.plans.length === 0 || this.selectedPlanId) &&
       String(this.formData.city || '').trim() &&
       String(this.formData.state || '').trim() &&
@@ -256,7 +263,6 @@ export class StudentFormPage implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.isSaving = true;
     try {
-      // Compress photo to base64 data URL (stored in Firestore, no Storage needed)
       let photoUrl: string | undefined;
       if (this.selectedPhotoFile) {
         photoUrl = await this.photoUploadService.compressToDataUrl(
@@ -271,7 +277,6 @@ export class StudentFormPage implements OnInit, OnDestroy {
         email: this.formData.email,
         phone: this.formData.phone,
         seatNumber,
-        adharNumber: adharNormalized,
         planId: this.selectedPlanId,
         planName: this.selectedPlan?.name || '',
         monthlyFee: feeAmount,
@@ -282,6 +287,9 @@ export class StudentFormPage implements OnInit, OnDestroy {
         pincode: String(this.formData.pincode || '').trim()
       };
       if (photoUrl) baseFields.photoUrl = photoUrl;
+      // Only include adharNumber if the user provided a new value (service will hash it).
+      // If blank in edit mode (student already hashed), skip — keeps existing hash intact.
+      if (adharNormalized) baseFields.adharNumber = adharNormalized;
 
       if (this.isEditMode && this.studentId) {
         await this.studentService.updateStudent(this.studentId, baseFields);

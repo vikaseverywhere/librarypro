@@ -39,12 +39,35 @@ service cloud.firestore {
       
       // Students subcollection
       match /students/{studentId} {
-        allow read, write: if belongsToLibrary(libraryId);
+        allow read: if belongsToLibrary(libraryId);
+        allow create: if belongsToLibrary(libraryId)
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.seatNumber is number
+          && request.resource.data.seatNumber > 0;
+        allow update: if belongsToLibrary(libraryId)
+          && (!('seatNumber' in request.resource.data)
+              || (request.resource.data.seatNumber is number
+                  && request.resource.data.seatNumber > 0));
+        allow delete: if belongsToLibrary(libraryId);
       }
       
       // Fees subcollection
       match /fees/{feeId} {
-        allow read, write: if belongsToLibrary(libraryId);
+        allow read: if belongsToLibrary(libraryId);
+        allow create: if belongsToLibrary(libraryId)
+          && request.resource.data.amount is number
+          && request.resource.data.amount > 0
+          && request.resource.data.status in ['pending', 'paid', 'overdue', 'waived']
+          && request.resource.data.studentId is string
+          && request.resource.data.studentId.size() > 0;
+        allow update: if belongsToLibrary(libraryId)
+          && (!('amount' in request.resource.data)
+              || (request.resource.data.amount is number
+                  && request.resource.data.amount > 0))
+          && (!('status' in request.resource.data)
+              || request.resource.data.status in ['pending', 'paid', 'overdue', 'waived']);
+        allow delete: if belongsToLibrary(libraryId);
       }
       
       // Plans subcollection

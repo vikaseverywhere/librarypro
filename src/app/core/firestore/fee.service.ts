@@ -61,13 +61,16 @@ export class FeeService {
   ) {}
 
   async createFee(fee: Omit<Fee, 'id' | 'feeId'>): Promise<string> {
-    const feeId = `fee_${Date.now()}`;
-    const feeData: Fee = {
+    // Use Firestore auto-ID — collision-free even under concurrent bulk creation.
+    const feeData: Omit<Fee, 'id' | 'feeId'> & { feeId: string } = {
       ...fee,
-      feeId,
+      feeId: '',  // will be back-filled after insert
       status: this.calculateFeeStatus(fee.dueDate, 'pending')
     };
-    return this.firestoreService.create('fees', feeData, feeId);
+    const docId = await this.firestoreService.create('fees', feeData);
+    // Back-fill feeId with the Firestore-generated doc ID for easy cross-referencing.
+    await this.firestoreService.update('fees', docId, { feeId: docId });
+    return docId;
   }
 
   async createBulkFees(

@@ -6,9 +6,11 @@ import { LibraryStateService } from '../library-state.service';
 export interface Student {
   id?: string;
   studentId: string;
-  // Aadhaar number must be unique within the active library.
-  // Stored as a string to preserve leading zeros and ensure exact matching.
-  adharNumber: string;
+  // Aadhaar: stored as SHA-256 hash (adharHash) + last 4 digits (adharLast4).
+  // adharNumber is DEPRECATED – retained empty string for backward compat with legacy docs.
+  adharNumber?: string;
+  adharHash?: string;   // SHA-256 hex digest of the 12-digit Aadhaar
+  adharLast4?: string;  // Last 4 digits, safe to keep for display
   name: string;
   fatherName?: string;
   email: string;
@@ -53,6 +55,16 @@ export class StudentService {
     private libraryStateService: LibraryStateService
   ) {}
 
+  /** SHA-256 hash of the raw Aadhaar string using Web Crypto API. */
+  private async hashAadhaar(adhar: string): Promise<string> {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(adhar.trim());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
   async isSeatNumberTaken(seatNumber: number, excludeStudentId?: string): Promise<boolean> {
     // Note: seatNumber uniqueness is enforced only for ACTIVE students.
     // We query a small page and then ignore inactive students client-side.
@@ -75,29 +87,49 @@ export class StudentService {
     const normalized = String(adharNumber || '').trim();
     if (!normalized) return false;
 
-    const matches = await this.firestoreService.list<Student>('students', [
-      { type: 'where', field: 'adharNumber', operator: '==', value: normalized },
-      { type: 'limit', limit: 1 }
+    const hash = await this.hashAadhaar(normalized);
+
+    // Check by hash (new hashed records) and plain text (legacy records) simultaneously.
+    const [byHash, byPlain] = await Promise.all([
+      this.firestoreService.list<Student>('students', [
+        { type: 'where', field: 'adharHash', operator: '==', value: hash },
+        { type: 'limit', limit: 2 }
+      ]),
+      this.firestoreService.list<Student>('students', [
+        { type: 'where', field: 'adharNumber', operator: '==', value: normalized },
+        { type: 'limit', limit: 2 }
+      ])
     ]);
 
+    const matches = [...byHash, ...byPlain];
     if (!matches.length) return false;
 
-    if (excludeStudentId && (matches[0].studentId === excludeStudentId || matches[0].id === excludeStudentId)) {
-      return false;
-    }
-
-    return true;
+    const conflict = matches.find(s =>
+      s.isActive !== false &&
+      s.studentId !== excludeStudentId &&
+      s.id !== excludeStudentId
+    );
+    return !!conflict;
   }
 
   async findByAdharNumber(adharNumber: string): Promise<Student | null> {
     const normalized = String(adharNumber || '').trim();
     if (!/^\d{12}$/.test(normalized)) return null;
 
-    const matches = await this.firestoreService.list<Student>('students', [
-      { type: 'where', field: 'adharNumber', operator: '==', value: normalized },
-      { type: 'limit', limit: 1 }
+    const hash = await this.hashAadhaar(normalized);
+
+    // Try hashed first, fall back to legacy plaintext.
+    const [byHash, byPlain] = await Promise.all([
+      this.firestoreService.list<Student>('students', [
+        { type: 'where', field: 'adharHash', operator: '==', value: hash },
+        { type: 'limit', limit: 1 }
+      ]),
+      this.firestoreService.list<Student>('students', [
+        { type: 'where', field: 'adharNumber', operator: '==', value: normalized },
+        { type: 'limit', limit: 1 }
+      ])
     ]);
-    return matches[0] || null;
+    return byHash[0] || byPlain[0] || null;
   }
 
   async addStudent(student: Omit<Student, 'id' | 'studentId'>): Promise<string> {
@@ -136,16 +168,23 @@ export class StudentService {
       throw new Error(`Seat ${student.seatNumber} is already assigned to another student.`);
     }
 
-    const studentId = `std_${Date.now()}`;
+    const adharHash = await this.hashAadhaar(adharNormalized);
+    const adharLast4 = adharNormalized.slice(-4);
+
+    // Use Firestore auto-ID — collision-free even under rapid concurrent adds.
     const studentData: Student = {
       ...student,
-      studentId,
+      studentId: '',  // back-filled after insert
       seatStatus: 'occupied',
       totalFeePending: 0,
-      adharNumber: adharNormalized,
+      adharNumber: '',    // never store plaintext
+      adharHash,
+      adharLast4,
       isActive: true
     };
-    return this.firestoreService.create('students', studentData, studentId);
+    const docId = await this.firestoreService.create('students', studentData);
+    await this.firestoreService.update('students', docId, { studentId: docId });
+    return docId;
   }
 
   async updateStudent(studentId: string, data: Partial<Student>): Promise<void> {
@@ -160,8 +199,8 @@ export class StudentService {
       }
     }
 
-    if (typeof data.adharNumber === 'string') {
-      const adharNormalized = String(data.adharNumber).trim();
+    if (typeof data.adharNumber === 'string' && data.adharNumber.trim()) {
+      const adharNormalized = data.adharNumber.trim();
       if (!/^\d{12}$/.test(adharNormalized)) {
         throw new Error('Aadhaar number must be exactly 12 digits.');
       }
@@ -171,7 +210,17 @@ export class StudentService {
         throw new Error('Aadhaar number already exists. Aadhaar must be unique.');
       }
 
-      data.adharNumber = adharNormalized;
+      const adharHash = await this.hashAadhaar(adharNormalized);
+      data = {
+        ...data,
+        adharHash,
+        adharLast4: adharNormalized.slice(-4),
+        adharNumber: '',  // clear any legacy plaintext
+      };
+    } else {
+      // Don't update adhar fields if adharNumber was empty (edit mode, no change)
+      const { adharNumber, ...rest } = data as any;
+      data = rest;
     }
 
     return this.firestoreService.update('students', studentId, data);

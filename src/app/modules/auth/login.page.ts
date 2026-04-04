@@ -15,6 +15,15 @@ export class LoginPage implements OnInit {
   showVerifyBanner = false;
   isResendingVerification = false;
 
+  // Brute-force throttle: 3 failures → 30s lockout.
+  private failedAttempts = 0;
+  private lockedUntil = 0;
+  private readonly MAX_ATTEMPTS = 3;
+  private readonly LOCKOUT_SECONDS = 30;
+
+  get isLockedOut(): boolean { return Date.now() < this.lockedUntil; }
+  get lockoutSecondsLeft(): number { return Math.ceil((this.lockedUntil - Date.now()) / 1000); }
+
   constructor(
     private formBuilder: FormBuilder,
     private authService: AuthService,
@@ -35,9 +44,16 @@ export class LoginPage implements OnInit {
       this.loginForm.reset();
     }
     this.showVerifyBanner = false;
+    this.failedAttempts = 0;
+    this.lockedUntil = 0;
   }
 
   async onLogin() {
+    if (this.isLockedOut) {
+      this.showError(`Too many failed attempts. Try again in ${this.lockoutSecondsLeft}s.`);
+      return;
+    }
+
     if (this.loginForm.invalid) {
       this.showError('Please fill all fields correctly');
       return;
@@ -54,7 +70,6 @@ export class LoginPage implements OnInit {
       const { email, password } = this.loginForm.value;
       await this.authService.login(email, password);
 
-      // Reload to get fresh emailVerified status from Firebase
       const verified = await this.authService.reloadUser();
       if (!verified) {
         await loading.dismiss();
@@ -63,11 +78,21 @@ export class LoginPage implements OnInit {
         return;
       }
 
+      // Successful login — reset throttle counter.
+      this.failedAttempts = 0;
       await loading.dismiss();
       await this.router.navigate(['/tabs/dashboard'], { replaceUrl: true });
     } catch (error: any) {
       await loading.dismiss();
-      this.showError(error.message || 'Login failed');
+      this.failedAttempts++;
+      if (this.failedAttempts >= this.MAX_ATTEMPTS) {
+        this.lockedUntil = Date.now() + this.LOCKOUT_SECONDS * 1000;
+        this.failedAttempts = 0;
+        this.showError(`Too many failed attempts. Account locked for ${this.LOCKOUT_SECONDS} seconds.`);
+      } else {
+        const remaining = this.MAX_ATTEMPTS - this.failedAttempts;
+        this.showError(`${error.message || 'Login failed'}. ${remaining} attempt${remaining > 1 ? 's' : ''} remaining.`);
+      }
     } finally {
       this.isLoading = false;
     }

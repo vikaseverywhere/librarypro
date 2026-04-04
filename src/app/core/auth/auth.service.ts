@@ -26,6 +26,8 @@ export class AuthService {
   private userProfile$ = new BehaviorSubject<UserProfile | null>(null);
   private isAuthenticated$ = new BehaviorSubject<boolean>(false);
   private authResolved$ = new BehaviorSubject<boolean>(false);
+  /** Live subscription to the user document — swapped on each login, cleared on logout. */
+  private profileSub?: { unsubscribe(): void };
 
   constructor(
     private afAuth: AngularFireAuth,
@@ -56,11 +58,13 @@ export class AuthService {
   }
 
   private loadUserProfile(uid: string) {
-    const userRef = this.firestore.doc(`users/${uid}`);
-    userRef.get().subscribe({
-      next: (userSnap) => {
-        if (userSnap.exists) {
-          this.userProfile$.next(userSnap.data() as UserProfile);
+    // Unsubscribe previous listener before starting a new one (e.g. library switch).
+    this.profileSub?.unsubscribe();
+    const userRef = this.firestore.doc<UserProfile>(`users/${uid}`);
+    this.profileSub = userRef.valueChanges().subscribe({
+      next: (data) => {
+        if (data) {
+          this.userProfile$.next(data as UserProfile);
         }
       },
       error: (error) => {
@@ -155,6 +159,8 @@ export class AuthService {
 
   async logout() {
     try {
+      this.profileSub?.unsubscribe();
+      this.profileSub = undefined;
       await this.afAuth.signOut();
       this.currentUser$.next(null);
       this.userProfile$.next(null);
