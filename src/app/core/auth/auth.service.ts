@@ -105,11 +105,10 @@ export class AuthService {
         photoUrl: ''
       };
 
-      // Save to Firestore
-      await this.firestore.doc(`users/${uid}`).set(userProfile);
-      
-      // Create library document
-      await this.firestore.doc(`libraries/${libraryId}`).set({
+      // Atomic batch write — both docs succeed or both fail
+      const batch = this.firestore.firestore.batch();
+      batch.set(this.firestore.doc(`users/${uid}`).ref, userProfile);
+      batch.set(this.firestore.doc(`libraries/${libraryId}`).ref, {
         libraryId,
         name: libraryName,
         ownerEmail: email,
@@ -130,6 +129,14 @@ export class AuthService {
         updatedAt: new Date(),
         createdBy: email
       });
+
+      try {
+        await batch.commit();
+      } catch (batchError) {
+        // Batch failed — delete the auth user so the account isn't orphaned
+        try { await user.delete(); } catch {}
+        throw batchError;
+      }
 
       // Set custom claims (done via Cloud Function in production)
       this.userProfile$.next(userProfile);

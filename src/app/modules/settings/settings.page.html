@@ -1,3 +1,4 @@
+<ion-page>
 <app-header mode="main"></app-header>
 
 <ion-content >
@@ -161,9 +162,6 @@
             <h3>Email Address</h3>
             <p class="value">{{ userEmail }}</p>
           </div>
-          <ion-button fill="clear">
-            <ion-icon name="create-outline"></ion-icon>
-          </ion-button>
         </div>
         <ion-item-divider></ion-item-divider>
         <div class="setting-item">
@@ -175,37 +173,7 @@
             <ion-icon name="key-outline"></ion-icon>
           </ion-button>
         </div>
-        <ion-item-divider></ion-item-divider>
-        <div class="setting-item">
-          <div class="setting-info">
-            <h3>Two-Factor Authentication</h3>
-            <p class="subtitle">Add extra security</p>
-          </div>
-          <ion-toggle></ion-toggle>
-        </div>
-      </div>
-    </div>
 
-    <!-- Subscription & Billing -->
-    <div class="settings-group">
-      <h2 class="section-title">Subscription</h2>
-      <div class="subscription-card">
-        <div class="subscription-info">
-          <div class="plan-badge">ACTIVE</div>
-          <h3>Premium Plan</h3>
-          <p class="plan-details">Unlimited students and features</p>
-          <p class="renewal">Renews on April 15, 2026</p>
-        </div>
-        <div class="plan-actions">
-          <ion-button size="small">
-            <ion-icon name="card-outline" slot="start"></ion-icon>
-            Update Payment Method
-          </ion-button>
-          <ion-button size="small" fill="outline">
-            <ion-icon name="document-outline" slot="start"></ion-icon>
-            View Invoice
-          </ion-button>
-        </div>
       </div>
     </div>
 
@@ -227,3 +195,4 @@
     </div>
   </div>
 </ion-content>
+</ion-page>

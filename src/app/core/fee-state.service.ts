@@ -41,7 +41,7 @@ export class FeeStateService implements OnDestroy {
           .collection<Fee>(`libraries/${libraryId}/fees`, (ref) =>
             // Spark optimization: keep listener bounded.
             // Sorted by dueDate so most relevant fees are included.
-            ref.orderBy('dueDate', 'desc').limit(2000)
+            ref.orderBy('dueDate', 'desc').limit(5000)
           )
           .valueChanges({ idField: 'id' }) as unknown) as Observable<Fee[]>;
       }),

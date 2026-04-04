@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
@@ -14,7 +14,7 @@ import { SeatInfo } from '../../shared/components/seat-map.component';
   templateUrl: './students.page.html',
   styleUrls: ['./students.page.scss']
 })
-export class StudentsPage implements OnInit {
+export class StudentsPage implements OnInit, OnDestroy {
   students: Student[] = [];
   inactiveStudents: Student[] = [];
   filteredStudents: Student[] = [];
@@ -27,6 +27,7 @@ export class StudentsPage implements OnInit {
   private paidAmounts: Record<string, number> = {};
   private pendingAmountsSub?: Subscription;
   private paidAmountsSub?: Subscription;
+  private profileSub?: Subscription;
 
   // Pagination
   currentPage = 1;
@@ -67,7 +68,7 @@ export class StudentsPage implements OnInit {
       this.applyFeeAmounts();
     });
 
-    this.authService.userProfile.subscribe((profile: UserProfile | null) => {
+    this.profileSub = this.authService.userProfile.subscribe((profile: UserProfile | null) => {
       if (!profile) return;
       this.libraryName = profile.libraryName || '';
       this.userEmail = profile.email || '';
@@ -76,14 +77,13 @@ export class StudentsPage implements OnInit {
     this.seatsSub = this.libraryStateService.totalSeats$.subscribe(seats => {
       this.seatMapTotalSeats = seats;
     });
-
-    this.loadStudents();
   }
 
   ngOnDestroy() {
     this.pendingAmountsSub?.unsubscribe();
     this.paidAmountsSub?.unsubscribe();
     this.seatsSub?.unsubscribe();
+    this.profileSub?.unsubscribe();
   }
 
   async ionViewWillEnter() {

@@ -135,14 +135,6 @@ export class StudentFormPage implements OnInit, OnDestroy {
     }
   }
 
-  ionViewWillLoad() {}
-
-  ionViewDidLoad() {}
-
-  ionViewWillEnter() {}
-
-  ionViewDidEnter() {}
-
   isFormValid(): boolean {
     const seat = Number(this.formData.seatNumber);
     const adhar = String(this.formData.adharNumber || '').trim();
@@ -211,6 +203,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
       // Auto-fill city/state from pincode result.
       this.formData.city = String(city);
       this.formData.state = String(state);
+      void this.toast('City and State auto-filled from pincode — please verify.', 'success');
     } catch {
       this.pincodeResolution = null;
     } finally {

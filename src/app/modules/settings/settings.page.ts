@@ -194,41 +194,40 @@ export class SettingsPage implements OnInit, OnDestroy {
         { text: 'Cancel', role: 'cancel' },
         {
           text: 'Update',
-          handler: async (data: any) => {
+          handler: (data: any) => {
             const current = String(data?.currentPassword || '').trim();
             const newPwd = String(data?.newPassword || '').trim();
             const confirm = String(data?.confirmPassword || '').trim();
 
             if (!current || !newPwd || !confirm) {
-              await this.showToast('All fields are required.', 'danger');
+              this.showToast('All fields are required.', 'danger');
               return false;
             }
             if (newPwd.length < 8) {
-              await this.showToast('New password must be at least 8 characters.', 'danger');
+              this.showToast('New password must be at least 8 characters.', 'danger');
               return false;
             }
             if (newPwd !== confirm) {
-              await this.showToast('New password and confirmation do not match.', 'danger');
+              this.showToast('New password and confirmation do not match.', 'danger');
               return false;
             }
             if (current === newPwd) {
-              await this.showToast('New password must be different from current password.', 'danger');
+              this.showToast('New password must be different from current password.', 'danger');
               return false;
             }
 
-            try {
-              await this.authService.changePassword(current, newPwd);
-              await this.showToast('Password updated successfully.');
-            } catch (e: any) {
+            this.authService.changePassword(current, newPwd).then(() => {
+              this.showToast('Password updated successfully.');
+            }).catch((e: any) => {
               const msg = e?.message || '';
               if (msg.includes('wrong-password') || msg.includes('invalid-credential')) {
-                await this.showToast('Current password is incorrect.', 'danger');
+                this.showToast('Current password is incorrect.', 'danger');
               } else if (msg.includes('too-many-requests')) {
-                await this.showToast('Too many attempts. Please try again later.', 'danger');
+                this.showToast('Too many attempts. Please try again later.', 'danger');
               } else {
-                await this.showToast(`Failed to update password. ${msg}`, 'danger');
+                this.showToast(`Failed to update password. ${msg}`, 'danger');
               }
-            }
+            });
             return true;
           }
         }
@@ -238,7 +237,7 @@ export class SettingsPage implements OnInit, OnDestroy {
   }
 
   getInitials(name: string): string {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return String(name || '').split(/\s+/).filter(Boolean).map(n => n[0]).join('').toUpperCase();
   }
 
   async onLogout() {

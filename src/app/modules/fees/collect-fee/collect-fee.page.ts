@@ -160,6 +160,15 @@ export class CollectFeePage implements OnInit {
     this.errorMessage = '';
 
     try {
+      const studentId = this.selectedStudent.studentId;
+      const month = this.feeMonth.trim();
+      const alreadyExists = await this.feeService.feeExistsForStudentMonth(studentId, month);
+      if (alreadyExists) {
+        this.errorMessage = `A fee record for ${this.selectedStudent.name} in ${month} already exists.`;
+        this.isSaving = false;
+        return;
+      }
+
       await this.feeService.createFee({
         studentId: this.selectedStudent.studentId,
         studentDocId: this.selectedStudent.id || this.selectedStudent.studentId,

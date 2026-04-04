@@ -44,8 +44,10 @@ export class LoginPage implements OnInit {
       this.loginForm.reset();
     }
     this.showVerifyBanner = false;
-    this.failedAttempts = 0;
-    this.lockedUntil = 0;
+    // Restore persisted lockout so navigating away and back doesn't reset it
+    const stored = sessionStorage.getItem('login_locked_until');
+    this.lockedUntil = stored ? Number(stored) : 0;
+    this.failedAttempts = Number(sessionStorage.getItem('login_failed_attempts') || '0');
   }
 
   async onLogin() {
@@ -80,6 +82,8 @@ export class LoginPage implements OnInit {
 
       // Successful login — reset throttle counter.
       this.failedAttempts = 0;
+      sessionStorage.removeItem('login_failed_attempts');
+      sessionStorage.removeItem('login_locked_until');
       await loading.dismiss();
       await this.router.navigate(['/tabs/dashboard'], { replaceUrl: true });
     } catch (error: any) {
@@ -88,8 +92,11 @@ export class LoginPage implements OnInit {
       if (this.failedAttempts >= this.MAX_ATTEMPTS) {
         this.lockedUntil = Date.now() + this.LOCKOUT_SECONDS * 1000;
         this.failedAttempts = 0;
+        sessionStorage.setItem('login_locked_until', String(this.lockedUntil));
+        sessionStorage.removeItem('login_failed_attempts');
         this.showError(`Too many failed attempts. Account locked for ${this.LOCKOUT_SECONDS} seconds.`);
       } else {
+        sessionStorage.setItem('login_failed_attempts', String(this.failedAttempts));
         const remaining = this.MAX_ATTEMPTS - this.failedAttempts;
         this.showError(`${error.message || 'Login failed'}. ${remaining} attempt${remaining > 1 ? 's' : ''} remaining.`);
       }

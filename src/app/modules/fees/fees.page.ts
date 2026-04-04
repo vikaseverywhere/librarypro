@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NavController, AlertController } from '@ionic/angular';
+import { Subscription } from 'rxjs';
 import { FeeService, Fee } from '../../core/firestore/fee.service';
 import { StudentService, Student } from '../../core/firestore/student.service';
 import { AuthService, UserProfile } from '../../core/auth/auth.service';
@@ -14,7 +15,7 @@ interface PendingFee extends Fee {
   templateUrl: './fees.page.html',
   styleUrls: ['./fees.page.scss']
 })
-export class FeesPage implements OnInit {
+export class FeesPage implements OnInit, OnDestroy {
   pendingFees: PendingFee[] = [];
   feeStats = {
     totalPending: 0,
@@ -25,6 +26,7 @@ export class FeesPage implements OnInit {
   isLoading = false;
   libraryName = '';
   userEmail = '';
+  private profileSub?: Subscription;
 
   constructor(
     private navController: NavController,
@@ -35,12 +37,15 @@ export class FeesPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.authService.userProfile.subscribe((profile: UserProfile | null) => {
+    this.profileSub = this.authService.userProfile.subscribe((profile: UserProfile | null) => {
       if (!profile) return;
       this.libraryName = profile.libraryName || '';
       this.userEmail = profile.email || '';
     });
-    this.loadFees();
+  }
+
+  ngOnDestroy() {
+    this.profileSub?.unsubscribe();
   }
 
   async ionViewWillEnter() {
@@ -81,9 +86,9 @@ export class FeesPage implements OnInit {
         };
       });
 
-      // Backfill unresolved names for legacy rows by direct doc lookup.
+      // Backfill unresolved names for legacy rows by direct doc lookup (parallel).
       const unresolved = this.pendingFees.filter((fee) => fee.studentName === 'Unknown Student');
-      for (const fee of unresolved) {
+      await Promise.all(unresolved.map(async (fee) => {
         const docCandidates = [
           String((fee as any).studentDocId || '').trim(),
           String(fee.studentId || '').trim()
@@ -96,7 +101,7 @@ export class FeesPage implements OnInit {
             break;
           }
         }
-      }
+      }));
     } catch (error) {
       console.error('Error loading fees:', error);
     } finally {

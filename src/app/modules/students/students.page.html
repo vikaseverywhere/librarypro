@@ -59,7 +59,7 @@
         <p>Deleted students will appear here</p>
       </div>
 
-      <div *ngIf="!isLoading && filteredStudents.length === 0 && students.length > 0" class="empty-state">
+      <div *ngIf="!isLoading && filteredStudents.length === 0 && (viewMode === 'active' ? students.length : inactiveStudents.length) > 0" class="empty-state">
         <ion-icon name="search-outline"></ion-icon>
         <h3>No students found</h3>
         <p>Try adjusting your search terms</p>
