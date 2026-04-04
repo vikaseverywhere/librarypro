@@ -184,12 +184,12 @@ export class StudentsPage implements OnInit {
 
   onAddStudent() {
     console.log('onAddStudent - navigating to /students/add');
-    this.router.navigate(['/students/add']);
+    this.router.navigate(['/tabs/students/add']);
   }
 
   onEditStudent(student: Student) {
     console.log('onEditStudent - navigating to /students/edit/' + student.studentId);
-    this.router.navigate(['/students/edit', student.studentId]);
+    this.router.navigate(['/tabs/students/edit', student.studentId]);
   }
 
   async onDeleteStudent(student: Student) {
@@ -289,7 +289,7 @@ export class StudentsPage implements OnInit {
   }
 
   onOpenStudentProfile(student: Student) {
-    this.router.navigate(['/students/profile', student.studentId]);
+    this.router.navigate(['/tabs/students/profile', student.studentId]);
   }
 
   async onPermanentDeleteStudent(student: Student) {
@@ -344,6 +344,6 @@ export class StudentsPage implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/tabs/dashboard']);
   }
 }

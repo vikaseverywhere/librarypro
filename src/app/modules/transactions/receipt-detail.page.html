@@ -1,25 +1,4 @@
-<ion-header>
-  <ion-toolbar class="pro-toolbar">
-    <ion-buttons slot="start">
-      <ion-button fill="clear" [routerLink]="['/dashboard']" class="toolbar-brand">
-        <div class="toolbar-brand-content">
-          <div class="toolbar-brand-circle">LP</div>
-          <div class="toolbar-brand-text">
-            <div class="brand-main">LibraryPro</div>
-            <div class="brand-sub">Home</div>
-          </div>
-        </div>
-      </ion-button>
-      <ion-back-button defaultHref="/transactions"></ion-back-button>
-    </ion-buttons>
-    <ion-title>
-      <div class="header-title">
-        <div class="header-main">Receipt</div>
-        <div class="header-sub">{{ txn?.receiptNumber || txnId }}</div>
-      </div>
-    </ion-title>
-  </ion-toolbar>
-</ion-header>
+<app-header mode="main"></app-header>
 
 <ion-content>
   <div style="padding:16px;">

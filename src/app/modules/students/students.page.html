@@ -1,32 +1,5 @@
 <ion-page>
-  <ion-header>
-    <ion-toolbar class="pro-toolbar">
-    <ion-buttons slot="start">
-      <ion-button fill="clear" [routerLink]="['/dashboard']" class="toolbar-brand">
-        <div class="toolbar-brand-content">
-          <div class="toolbar-brand-circle">LP</div>
-          <div class="toolbar-brand-text">
-            <div class="brand-main">LibraryPro</div>
-            <div class="brand-sub">Home</div>
-          </div>
-        </div>
-      </ion-button>
-      <ion-back-button defaultHref="/dashboard"></ion-back-button>
-    </ion-buttons>
-      <ion-title>
-        <div class="header-title">
-          <div class="header-main">Students</div>
-          <div class="header-sub">{{ libraryName }}</div>
-        </div>
-      </ion-title>
-      <ion-buttons slot="end" class="header-end">
-        <ion-button fill="clear">
-          <ion-icon name="person-outline" slot="start"></ion-icon>
-          <span class="header-email">{{ userEmail }}</span>
-        </ion-button>
-      </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+  <app-header mode="main"></app-header>
 
 <ion-content >
   <div class="students-header">
@@ -55,7 +28,7 @@
 
     <!-- Add Student Button -->
     <div class="action-buttons">
-      <ion-button expand="block" class="add-btn" routerLink="/students/add">
+      <ion-button expand="block" class="add-btn" routerLink="/tabs/students/add">
         <ion-icon name="person-add-outline" slot="start"></ion-icon>
         Add New Student
       </ion-button>
@@ -74,7 +47,7 @@
         <ion-icon name="people-outline"></ion-icon>
         <h3>No students yet</h3>
         <p>Add your first student to get started</p>
-        <ion-button routerLink="/students/add">
+        <ion-button routerLink="/tabs/students/add">
           <ion-icon name="person-add-outline" slot="start"></ion-icon>
           Add Student
         </ion-button>
@@ -129,7 +102,7 @@
             <ion-button fill="clear" size="small" (click)="onOpenStudentProfile(student)">
               <ion-icon name="eye-outline" slot="icon-only"></ion-icon>
             </ion-button>
-            <ion-button *ngIf="viewMode === 'active'" fill="clear" size="small" [routerLink]="['/students/edit', student.studentId]">
+            <ion-button *ngIf="viewMode === 'active'" fill="clear" size="small" [routerLink]="['/tabs/students/edit', student.studentId]">
               <ion-icon name="create-outline" slot="icon-only"></ion-icon>
             </ion-button>
             <ion-button *ngIf="viewMode === 'active'" fill="clear" size="small" color="danger" (click)="onDeleteStudent(student)">

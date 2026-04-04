@@ -169,7 +169,7 @@ export class CollectFeePage implements OnInit {
         dueDate: new Date(this.feeDueDate),
         status: 'pending'
       });
-      this.navController.navigateBack('/fees');
+      this.navController.navigateBack('/tabs/fees');
     } catch (error) {
       console.error('Error creating fee:', error);
       this.errorMessage = 'Failed to save fee. Please check internet and try again.';
@@ -183,6 +183,6 @@ export class CollectFeePage implements OnInit {
   }
 
   goBack() {
-    this.navController.navigateBack('/fees');
+    this.navController.navigateBack('/tabs/fees');
   }
 }

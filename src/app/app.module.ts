@@ -31,22 +31,42 @@ import { ReceiptDetailPage } from './modules/transactions/receipt-detail.page';
 import { StudentProfilePage } from './modules/students/student-profile/student-profile.page';
 import { PlansPage } from './modules/plans/plans.page';
 import { SeatMapComponent } from './shared/components/seat-map.component';
+import { LibrarySwitcherComponent } from './shared/components/library-switcher/library-switcher.component';
+import { LibrarySwitcherModalComponent } from './shared/components/library-switcher/library-switcher-modal.component';
+import { AppHeaderComponent } from './shared/components/app-header/app-header.component';
+import { TabsComponent } from './tabs/tabs.component';
 
 const routes: Routes = [
   { path: 'auth', loadChildren: () => import('./modules/auth/auth.module').then(m => m.AuthModule) },
-  { path: 'dashboard',         canActivate: [AuthGuard], component: DashboardPage },
-  { path: 'students/add',      canActivate: [AuthGuard], component: StudentFormPage },
-  { path: 'students/edit/:id', canActivate: [AuthGuard], component: StudentFormPage },
-  { path: 'students/profile/:id', canActivate: [AuthGuard], component: StudentProfilePage },
-  { path: 'students',          canActivate: [AuthGuard], component: StudentsPage },
-  { path: 'libraries/add',    canActivate: [AuthGuard], component: LibraryCreatePage },
-  { path: 'libraries',        canActivate: [AuthGuard], component: LibrariesPage },
-  { path: 'fees/collect',      canActivate: [AuthGuard], component: CollectFeePage },
-  { path: 'fees',              canActivate: [AuthGuard], component: FeesPage },
-  { path: 'transactions',      canActivate: [AuthGuard], component: TransactionsPage },
-  { path: 'transactions/:id',  canActivate: [AuthGuard], component: ReceiptDetailPage },
-  { path: 'settings',          canActivate: [AuthGuard], component: SettingsPage },
-  { path: 'plans',              canActivate: [AuthGuard], component: PlansPage },
+  {
+    path: 'tabs',
+    component: TabsComponent,
+    canActivate: [AuthGuard],
+    children: [
+      { path: 'dashboard',            component: DashboardPage },
+      { path: 'students/add',         component: StudentFormPage },
+      { path: 'students/edit/:id',    component: StudentFormPage },
+      { path: 'students/profile/:id', component: StudentProfilePage },
+      { path: 'students',             component: StudentsPage },
+      { path: 'libraries/add',        component: LibraryCreatePage },
+      { path: 'libraries',            component: LibrariesPage },
+      { path: 'fees/collect',         component: CollectFeePage },
+      { path: 'fees',                 component: FeesPage },
+      { path: 'transactions/:id',     component: ReceiptDetailPage },
+      { path: 'transactions',         component: TransactionsPage },
+      { path: 'settings',             component: SettingsPage },
+      { path: 'plans',                component: PlansPage },
+      { path: '',                     redirectTo: 'dashboard', pathMatch: 'full' }
+    ]
+  },
+  // Keep old routes as redirects for backwards compatibility
+  { path: 'dashboard',         redirectTo: 'tabs/dashboard', pathMatch: 'full' },
+  { path: 'students',          redirectTo: 'tabs/students', pathMatch: 'full' },
+  { path: 'fees',              redirectTo: 'tabs/fees', pathMatch: 'full' },
+  { path: 'transactions',      redirectTo: 'tabs/transactions', pathMatch: 'full' },
+  { path: 'settings',          redirectTo: 'tabs/settings', pathMatch: 'full' },
+  { path: 'plans',             redirectTo: 'tabs/plans', pathMatch: 'full' },
+  { path: 'libraries',         redirectTo: 'tabs/libraries', pathMatch: 'full' },
   { path: '',                  redirectTo: 'auth/login', pathMatch: 'full' },
   { path: '**',                redirectTo: 'auth/login' }
 ];
@@ -66,7 +86,11 @@ const routes: Routes = [
     ReceiptDetailPage,
     StudentProfilePage,
     PlansPage,
-    SeatMapComponent
+    SeatMapComponent,
+    LibrarySwitcherComponent,
+    LibrarySwitcherModalComponent,
+    AppHeaderComponent,
+    TabsComponent
   ],
   imports: [
     BrowserModule,

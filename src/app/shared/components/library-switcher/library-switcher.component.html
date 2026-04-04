@@ -1,0 +1,10 @@
+<!-- Trigger button - sits inside ion-buttons slot="start" natively -->
+<ion-button fill="clear" class="lib-btn" (click)="openSwitcher()">
+  <ion-icon name="location-sharp" slot="start" class="lib-icon"></ion-icon>
+  <span class="lib-label">
+    <span class="lib-name">{{ activeLibraryName || 'Library' }}</span>
+    <span class="lib-city" *ngIf="activeLibraryCity">{{ activeLibraryCity }}</span>
+  </span>
+  <ion-icon name="chevron-down-outline" slot="end" class="lib-arrow"></ion-icon>
+</ion-button>
+

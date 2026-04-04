@@ -101,11 +101,11 @@ ion-card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-// App-wide header styling for a more premium look.
+// App-wide header styling — matches app primary blue palette.
 .pro-toolbar {
-  --background: linear-gradient(135deg, rgba(43, 124, 212, 0.95) 0%, rgba(34, 102, 197, 0.95) 100%);
+  --background: linear-gradient(135deg, #1a3a6b 0%, #2275a0 55%, #3399cc 100%);
   --color: #fff;
-  box-shadow: 0 10px 30px rgba(34, 102, 197, 0.18);
+  box-shadow: 0 4px 24px rgba(26, 58, 107, 0.45), 0 1px 0 rgba(255,255,255,0.07) inset;
 }
 
 .pro-toolbar .header-title {
@@ -145,7 +145,7 @@ ion-card {
   border-radius: 50%;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 6px 16px rgba(16, 71, 122, 0.22);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
   margin-right: 6px;
   display: inline-flex;
   align-items: center;
@@ -202,4 +202,27 @@ ion-card {
   font-size: 0.78rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.85);
+}
+
+// When switcher toolbar is used, hide the default title to avoid overlap
+.switcher-toolbar ion-title {
+  display: none;
+}
+
+// Sub-page title (white, centered)
+.pro-toolbar ion-title.pro-title {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+// Library switcher modal — centered card
+.lib-switcher-modal {
+  --height: auto;
+  --max-height: 480px;
+  --width: 92%;
+  --max-width: 420px;
+  --border-radius: 20px;
+  --box-shadow: 0 8px 48px rgba(0, 0, 0, 0.2);
+  align-items: center;
 }

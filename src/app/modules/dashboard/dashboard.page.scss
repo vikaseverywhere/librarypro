@@ -145,6 +145,16 @@ ion-content {
       color: #10b981;
     }
   }
+
+  &.success-alt {
+    &::before {
+      background: #059669;
+    }
+
+    ion-icon {
+      color: #059669;
+    }
+  }
 }
 
 // Action Cards
@@ -639,5 +649,105 @@ ion-content {
       box-shadow: 0 5px 18px rgba(22, 163, 74, 0.35);
       transform: translateY(-1px);
     }
+  }
+}
+
+/* ═══════════════════════════════════════════
+   Overdue & Due Payments Sections
+   ═══════════════════════════════════════════ */
+
+.payments-section {
+  margin-top: 1.5rem;
+
+  .overdue-title {
+    color: #dc2626;
+  }
+
+  .due-title {
+    color: #f59e0b;
+  }
+}
+
+.all-clear {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  background: #f0fdf4;
+  border-radius: 12px;
+  border: 1px solid #bbf7d0;
+
+  .clear-icon {
+    color: #22c55e;
+    font-size: 20px;
+  }
+
+  span {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #6b7280;
+    letter-spacing: 0.5px;
+  }
+}
+
+.payment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  &.overdue {
+    border-left: 3px solid #ef4444;
+  }
+
+  &.pending {
+    border-left: 3px solid #f59e0b;
+  }
+}
+
+.payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payment-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.payment-meta {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.payment-amount {
+  font-size: 1rem;
+  font-weight: 800;
+
+  &.overdue {
+    color: #ef4444;
+  }
+
+  &.pending {
+    color: #f59e0b;
   }
 }

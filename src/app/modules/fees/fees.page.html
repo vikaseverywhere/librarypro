@@ -1,31 +1,4 @@
-<ion-header>
-  <ion-toolbar class="pro-toolbar">
-    <ion-buttons slot="start">
-      <ion-button fill="clear" [routerLink]="['/dashboard']" class="toolbar-brand">
-        <div class="toolbar-brand-content">
-          <div class="toolbar-brand-circle">LP</div>
-          <div class="toolbar-brand-text">
-            <div class="brand-main">LibraryPro</div>
-            <div class="brand-sub">Home</div>
-          </div>
-        </div>
-      </ion-button>
-      <ion-back-button defaultHref="/dashboard"></ion-back-button>
-    </ion-buttons>
-    <ion-title>
-      <div class="header-title">
-        <div class="header-main">Fees</div>
-        <div class="header-sub">{{ libraryName }}</div>
-      </div>
-    </ion-title>
-    <ion-buttons slot="end" class="header-end">
-      <ion-button fill="clear">
-        <ion-icon name="mail-outline" slot="start"></ion-icon>
-        <span class="header-email">{{ userEmail }}</span>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header mode="main"></app-header>
 
 <ion-content >
   <div class="fees-header">

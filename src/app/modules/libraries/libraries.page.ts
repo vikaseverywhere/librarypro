@@ -69,7 +69,7 @@ export class LibrariesPage implements OnInit, OnDestroy {
   }
 
   async onAddLibrary() {
-    this.navController.navigateForward('/libraries/add');
+    this.navController.navigateForward('/tabs/libraries/add');
   }
 
   async useLibrary(libraryId: string) {
@@ -87,7 +87,7 @@ export class LibrariesPage implements OnInit, OnDestroy {
       });
       await toast.present();
 
-      this.navController.navigateRoot('/dashboard');
+      this.navController.navigateRoot('/tabs/dashboard');
     } catch (error) {
       console.error('useLibrary error:', error);
       const toast = await this.toastController.create({

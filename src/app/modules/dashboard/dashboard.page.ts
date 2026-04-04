@@ -9,12 +9,14 @@ import { FeeStateService } from '../../core/fee-state.service';
 import { LibraryStateService } from '../../core/library-state.service';
 import { FirestoreService } from '../../core/firestore/firestore.service';
 import { SeatInfo } from '../../shared/components/seat-map.component';
+import { Fee } from '../../core/firestore/fee.service';
 
 interface DashboardStats {
   totalStudents: number;
   totalFeesPending: number;
   totalFeesOverdue: number;
   monthlyRevenue: number;
+  yearlyRevenue: number;
   totalCapacity: number;
   occupiedSeats: number;
   vacantSeats: number;
@@ -35,6 +37,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     totalFeesPending: 0,
     totalFeesOverdue: 0,
     monthlyRevenue: 0,
+    yearlyRevenue: 0,
     totalCapacity: 0,
     occupiedSeats: 0,
     vacantSeats: 0
@@ -45,12 +48,17 @@ export class DashboardPage implements OnInit, OnDestroy {
   isSavingCapacity = false;
   occupiedSeatData: SeatInfo[] = [];
 
+  // Overdue & Due payment lists
+  overdueFees: Fee[] = [];
+  dueFees: Fee[] = [];
+
   // Student detail modal
   modalStudent: Student | null = null;
   isLoadingModal = false;
 
   private seatsSub?: Subscription;
   private feeStatsSub?: Subscription;
+  private feeListSub?: Subscription;
 
   constructor(
     private authService: AuthService,
@@ -77,8 +85,20 @@ export class DashboardPage implements OnInit, OnDestroy {
         ...this.stats,
         totalFeesPending: feeStats.totalPending,
         totalFeesOverdue: feeStats.totalOverdue,
-        monthlyRevenue: feeStats.monthlyRevenue
+        monthlyRevenue: feeStats.monthlyRevenue,
+        yearlyRevenue: feeStats.yearlyRevenue
       };
+    });
+
+    this.feeListSub = this.feeStateService.fees$.subscribe((fees) => {
+      this.overdueFees = fees
+        .filter(f => f.status === 'overdue')
+        .sort((a, b) => new Date(a.dueDate as any).getTime() - new Date(b.dueDate as any).getTime())
+        .slice(0, 5);
+      this.dueFees = fees
+        .filter(f => f.status === 'pending')
+        .sort((a, b) => new Date(a.dueDate as any).getTime() - new Date(b.dueDate as any).getTime())
+        .slice(0, 5);
     });
 
     this.loadDashboard();
@@ -87,6 +107,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.seatsSub?.unsubscribe();
     this.feeStatsSub?.unsubscribe();
+    this.feeListSub?.unsubscribe();
   }
 
   ionViewWillEnter() {
@@ -144,6 +165,7 @@ export class DashboardPage implements OnInit, OnDestroy {
         totalFeesPending: this.stats.totalFeesPending,
         totalFeesOverdue: this.stats.totalFeesOverdue,
         monthlyRevenue: this.stats.monthlyRevenue,
+        yearlyRevenue: this.stats.yearlyRevenue,
         totalCapacity,
         occupiedSeats: studentStats.occupiedSeats,
         vacantSeats: Math.max(totalCapacity - studentStats.occupiedSeats, 0)
@@ -205,54 +227,54 @@ export class DashboardPage implements OnInit, OnDestroy {
   }
 
   navigateToStudents() {
-    this.navController.navigateForward('/students');
+    this.navController.navigateForward('/tabs/students');
   }
 
   navigateToFees() {
-    this.navController.navigateForward('/fees');
+    this.navController.navigateForward('/tabs/fees');
   }
 
   navigateToSettings() {
-    this.navController.navigateForward('/settings');
+    this.navController.navigateForward('/tabs/settings');
   }
 
   navigateToLibraries() {
-    this.navController.navigateForward('/libraries');
+    this.navController.navigateForward('/tabs/libraries');
   }
 
   navigateToReceipts() {
-    this.navController.navigateForward('/transactions');
+    this.navController.navigateForward('/tabs/transactions');
   }
 
   navigateToPlans() {
-    this.navController.navigateForward('/plans');
+    this.navController.navigateForward('/tabs/plans');
   }
 
   onQuickAddStudent() {
-    this.navController.navigateForward('/students/add');
+    this.navController.navigateForward('/tabs/students/add');
   }
 
   onQuickCollectFees() {
-    this.navController.navigateForward('/fees/collect');
+    this.navController.navigateForward('/tabs/fees/collect');
   }
 
   onQuickSettings() {
-    this.navController.navigateForward('/settings');
+    this.navController.navigateForward('/tabs/settings');
   }
 
   onQuickViewStudents() {
-    this.navController.navigateForward('/students');
+    this.navController.navigateForward('/tabs/students');
   }
 
   onSeatViewProfile(seat: SeatInfo) {
     if (seat.studentId) {
-      this.navController.navigateForward(`/students/profile/${seat.studentId}`);
+      this.navController.navigateForward(`/tabs/students/profile/${seat.studentId}`);
     }
   }
 
   onSeatCollectFee(seat: SeatInfo) {
     if (seat.studentId) {
-      this.navController.navigateForward(`/fees/collect`, {
+      this.navController.navigateForward(`/tabs/fees/collect`, {
         queryParams: { studentId: seat.studentId }
       });
     }
@@ -282,7 +304,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     const id = this.modalStudent?.studentId;
     if (id) {
       this.closeStudentModal();
-      this.navController.navigateForward(`/students/profile/${id}`);
+      this.navController.navigateForward(`/tabs/students/profile/${id}`);
     }
   }
 
@@ -290,7 +312,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     const id = this.modalStudent?.studentId;
     if (id) {
       this.closeStudentModal();
-      this.navController.navigateForward(`/fees/collect`, {
+      this.navController.navigateForward(`/tabs/fees/collect`, {
         queryParams: { studentId: id }
       });
     }

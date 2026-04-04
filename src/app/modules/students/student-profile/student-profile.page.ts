@@ -60,7 +60,7 @@ export class StudentProfilePage implements OnInit {
   }
 
   goBack() {
-    this.navController.navigateBack('/students');
+    this.navController.navigateBack('/tabs/students');
   }
 }
 

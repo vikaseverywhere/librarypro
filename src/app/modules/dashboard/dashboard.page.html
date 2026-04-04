@@ -1,39 +1,5 @@
 <ion-page>
-<ion-header >
-  <ion-toolbar class="pro-toolbar">
-    <ion-buttons slot="start">
-      <ion-button fill="clear" [routerLink]="['/dashboard']" class="toolbar-brand">
-        <div class="toolbar-brand-content">
-          <div class="toolbar-brand-circle">LP</div>
-          <div class="toolbar-brand-text">
-            <div class="brand-main">LibraryPro</div>
-            <div class="brand-sub">Dashboard</div>
-          </div>
-        </div>
-      </ion-button>
-    </ion-buttons>
-    <ion-title>
-      <div class="header-title">
-        <div class="header-main">LibraryPro</div>
-        <div class="header-sub">Dashboard • {{ libraryName }}</div>
-      </div>
-    </ion-title>
-    <ion-buttons slot="end">
-      <div class="toolbar-avatar" *ngIf="ownerPhotoUrl">
-        <img [src]="ownerPhotoUrl" alt="Owner photo" />
-      </div>
-      <div class="toolbar-avatar" *ngIf="!ownerPhotoUrl && libraryPhotoUrl">
-        <img [src]="libraryPhotoUrl" alt="Library photo" />
-      </div>
-      <ion-button fill="clear" (click)="navigateToLibraries()">
-        <ion-icon name="business-outline"></ion-icon>
-      </ion-button>
-      <ion-button (click)="onLogout()">
-        <ion-icon name="log-out-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<app-header mode="main"></app-header>
 
 <ion-content >
   <div class="dashboard-header">
@@ -73,7 +39,13 @@
           <ion-icon name="trending-up-outline"></ion-icon>
           <div class="stat-value">₹{{ stats.monthlyRevenue | number: '1.0-0' }}</div>
           <div class="stat-label">Monthly Revenue</div>
-          <div class="stat-subtitle">This month</div>
+          <div class="stat-subtitle">In last 30 days</div>
+        </div>
+        <div class="stat-card success-alt" (click)="navigateToReceipts()">
+          <ion-icon name="bar-chart-outline"></ion-icon>
+          <div class="stat-value">₹{{ stats.yearlyRevenue | number: '1.0-0' }}</div>
+          <div class="stat-label">Yearly Revenue</div>
+          <div class="stat-subtitle">In last 12 months</div>
         </div>
       </div>
     </div>
@@ -111,6 +83,42 @@
           <ion-icon name="search-outline" size="large"></ion-icon>
           <h3>View Students</h3>
           <p>See all students list</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overdue Payments -->
+    <div class="payments-section">
+      <h2 class="section-title overdue-title">Overdue Payments</h2>
+      <div *ngIf="overdueFees.length === 0" class="all-clear">
+        <ion-icon name="checkmark-circle" class="clear-icon"></ion-icon>
+        <span>ALL CLEAR !</span>
+      </div>
+      <div *ngIf="overdueFees.length > 0" class="payment-list">
+        <div class="payment-item overdue" *ngFor="let fee of overdueFees" (click)="navigateToFees()">
+          <div class="payment-info">
+            <span class="payment-name">{{ fee.studentName || 'Student' }}</span>
+            <span class="payment-meta">{{ fee.month }} • Due: {{ fee.dueDate | date:'d MMM' }}</span>
+          </div>
+          <span class="payment-amount overdue">₹{{ fee.amount | number:'1.0-0' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Due Payments -->
+    <div class="payments-section">
+      <h2 class="section-title due-title">Due Payments</h2>
+      <div *ngIf="dueFees.length === 0" class="all-clear">
+        <ion-icon name="checkmark-circle" class="clear-icon"></ion-icon>
+        <span>ALL CLEAR !</span>
+      </div>
+      <div *ngIf="dueFees.length > 0" class="payment-list">
+        <div class="payment-item pending" *ngFor="let fee of dueFees" (click)="navigateToFees()">
+          <div class="payment-info">
+            <span class="payment-name">{{ fee.studentName || 'Student' }}</span>
+            <span class="payment-meta">{{ fee.month }} • Due: {{ fee.dueDate | date:'d MMM' }}</span>
+          </div>
+          <span class="payment-amount pending">₹{{ fee.amount | number:'1.0-0' }}</span>
         </div>
       </div>
     </div>

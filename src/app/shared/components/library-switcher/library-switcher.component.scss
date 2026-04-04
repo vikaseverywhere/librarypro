@@ -1,0 +1,410 @@
+/* ── Host: transparent so ion-button is direct child of ion-buttons ── */
+:host {
+  display: contents;
+}
+
+/* ── Trigger Button ── */
+.lib-btn {
+  --color: #fff;
+  --background: transparent;
+  --background-hover: rgba(255, 255, 255, 0.1);
+  --background-activated: rgba(255, 255, 255, 0.15);
+  --padding-start: 6px;
+  --padding-end: 4px;
+  --border-radius: 6px;
+  height: 44px;
+  min-width: 0;
+
+  .lib-icon {
+    font-size: 17px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .lib-arrow {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+.lib-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+  max-width: 150px;
+  margin: 0 4px;
+}
+
+.lib-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #fff !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.lib-city {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95) !important;
+  white-space: nowrap;
+}
+
+/* ── Overlay ── */
+.sw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: swFadeIn 0.15s ease;
+}
+
+@keyframes swFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal Card ── */
+.sw-card {
+  width: 100%;
+  max-width: 340px;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+  animation: swSlideUp 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes swSlideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.sw-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid #f1f5f9;
+
+  span {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+}
+
+.sw-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #64748b;
+  font-size: 20px;
+  transition: background 0.15s;
+
+  &:hover { background: #f1f5f9; }
+}
+
+.sw-body {
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.sw-loading {
+  display: flex;
+  justify-content: center;
+  padding: 28px;
+}
+
+.sw-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: #f8fafc; }
+
+  &.sw-active {
+    background: #f3f0ff;
+
+    .sw-item-name { color: #5b21b6; font-weight: 700; }
+    .sw-item-avatar ion-icon { color: #7c3aed; }
+  }
+}
+
+.sw-item-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 18px;
+    color: #94a3b8;
+  }
+}
+
+.sw-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sw-item-name {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.sw-item-city {
+  display: block;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.sw-check {
+  font-size: 22px;
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+.sw-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid #f1f5f9;
+  cursor: pointer;
+  color: #5b21b6;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: background 0.15s;
+
+  ion-icon { font-size: 20px; }
+
+  &:hover { background: #faf8ff; }
+}
+
+/* ═══════════════════════════════════════
+   Modal Backdrop & Container
+   ═══════════════════════════════════════ */
+
+.switcher-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+  padding: 1rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.switcher-modal {
+  width: 100%;
+  max-width: 380px;
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  animation: scaleIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ─── Modal Header ─── */
+.modal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+
+  h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+}
+
+.modal-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0 20px;
+}
+
+.modal-loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+
+  ion-spinner {
+    --color: #5b21b6;
+  }
+}
+
+/* ─── Library List ─── */
+.library-list {
+  padding: 12px 16px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.library-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 2px solid transparent;
+  margin-bottom: 6px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  &.active {
+    background: #faf5ff;
+    border-color: #7c3aed;
+  }
+}
+
+.lib-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ede9fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 18px;
+    color: #5b21b6;
+  }
+}
+
+.lib-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.lib-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.lib-city {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.lib-check {
+  font-size: 22px;
+  color: #7c3aed;
+  flex-shrink: 0;
+}
+
+.lib-uncheck {
+  font-size: 22px;
+  color: #d1d5db;
+  flex-shrink: 0;
+}
+
+/* ─── Add New Library Button ─── */
+.add-library-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: calc(100% - 32px);
+  margin: 8px 16px 16px;
+  padding: 13px 20px;
+  background: #5b21b6;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  ion-icon {
+    font-size: 20px;
+  }
+
+  &:hover {
+    background: #4c1d95;
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

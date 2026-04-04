@@ -199,10 +199,10 @@ export class SettingsPage implements OnInit, OnDestroy {
   }
 
   goBack() {
-    this.navController.navigateBack('/dashboard');
+    this.navController.navigateBack('/tabs/dashboard');
   }
 
   goToLibraries() {
-    this.navController.navigateForward('/libraries');
+    this.navController.navigateForward('/tabs/libraries');
   }
 }

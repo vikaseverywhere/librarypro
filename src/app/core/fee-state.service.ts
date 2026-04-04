@@ -10,6 +10,7 @@ export interface FeeStatsSnapshot {
   totalOverdue: number;
   totalPaid: number;
   monthlyRevenue: number;
+  yearlyRevenue: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -83,6 +84,7 @@ export class FeeStateService implements OnDestroy {
 
   private buildStats(fees: Fee[]): FeeStatsSnapshot {
     const currentMonth = this.getCurrentMonth();
+    const currentYear = String(new Date().getFullYear());
 
     return {
       totalPending: fees
@@ -96,6 +98,9 @@ export class FeeStateService implements OnDestroy {
         .reduce((sum, fee) => sum + (fee.amount || 0), 0),
       monthlyRevenue: fees
         .filter((fee) => fee.status === 'paid' && fee.month === currentMonth)
+        .reduce((sum, fee) => sum + (fee.amount || 0), 0),
+      yearlyRevenue: fees
+        .filter((fee) => fee.status === 'paid' && (fee.month || '').startsWith(currentYear))
         .reduce((sum, fee) => sum + (fee.amount || 0), 0)
     };
   }

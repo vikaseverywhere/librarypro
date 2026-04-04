@@ -1,11 +1,4 @@
-<ion-header >
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/dashboard"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Settings</ion-title>
-  </ion-toolbar>
-</ion-header>
+<app-header mode="main"></app-header>
 
 <ion-content >
   <div class="settings-header">
@@ -134,7 +127,7 @@
     <div class="settings-group">
       <h2 class="section-title">Fee Plans</h2>
       <div class="settings-card">
-        <ion-button expand="block" routerLink="/plans">
+        <ion-button expand="block" routerLink="/tabs/plans">
           <ion-icon name="document-text-outline" slot="start"></ion-icon>
           Manage Plans
         </ion-button>
@@ -154,7 +147,7 @@
     <div class="settings-group">
       <h2 class="section-title">Receipts & Transactions</h2>
       <div class="settings-card">
-        <ion-button expand="block" routerLink="/transactions">
+        <ion-button expand="block" routerLink="/tabs/transactions">
           <ion-icon name="receipt-outline" slot="start"></ion-icon>
           View Receipts
         </ion-button>

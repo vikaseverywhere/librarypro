@@ -81,7 +81,7 @@ export class ReceiptDetailPage implements OnInit {
   }
 
   goBack() {
-    this.navController.navigateBack('/transactions');
+    this.navController.navigateBack('/tabs/transactions');
   }
 
   private async toast(message: string, color: 'success' | 'danger' = 'success') {

@@ -300,7 +300,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
         }
       }
 
-      this.router.navigate(['/students']);
+      this.router.navigate(['/tabs/students']);
     } catch (error: any) {
       console.error('Error saving student:', error);
       this.errorMessage = error?.message || 'Failed to save student';
@@ -311,7 +311,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
 
   goBack() {
     console.log('goBack called');
-    this.router.navigate(['/students']);
+    this.router.navigate(['/tabs/students']);
   }
 
   ngOnDestroy() {

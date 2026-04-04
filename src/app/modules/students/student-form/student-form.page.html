@@ -1,32 +1,5 @@
 <ion-page>
-  <ion-header>
-    <ion-toolbar class="pro-toolbar">
-      <ion-buttons slot="start">
-        <ion-button fill="clear" [routerLink]="['/dashboard']" class="toolbar-brand">
-          <div class="toolbar-brand-content">
-            <div class="toolbar-brand-circle">LP</div>
-            <div class="toolbar-brand-text">
-              <div class="brand-main">LibraryPro</div>
-              <div class="brand-sub">Home</div>
-            </div>
-          </div>
-        </ion-button>
-        <ion-back-button defaultHref="/students"></ion-back-button>
-      </ion-buttons>
-      <ion-title>
-        <div class="header-title">
-          <div class="header-main">{{ isEditMode ? 'Update Student' : 'Add Student' }}</div>
-          <div class="header-sub">{{ libraryName }}</div>
-        </div>
-      </ion-title>
-      <ion-buttons slot="end" class="header-end">
-        <ion-button fill="clear">
-          <ion-icon name="person-outline" slot="start"></ion-icon>
-          <span class="header-email">{{ userEmail }}</span>
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
-  </ion-header>
+  <app-header mode="main"></app-header>
 
   <ion-content>
     <div class="form-container">
@@ -144,7 +117,7 @@
       <div *ngIf="plans.length === 0" style="margin: 0.5rem 0 1rem; padding: 12px; background: #fff3e0; border-radius: 8px;">
         <div style="font-weight: 700; color: #e65100;">No plans created yet</div>
         <div style="font-size: 0.85rem; color: #bf360c; margin-top: 4px;">
-          Go to <a routerLink="/plans" style="font-weight:700;">Manage Plans</a> to create fee plans first.
+          Go to <a routerLink="/tabs/plans" style="font-weight:700;">Manage Plans</a> to create fee plans first.
         </div>
       </div>
 
@@ -193,7 +166,7 @@
           <ion-icon *ngIf="!isSaving" name="add-circle-outline" slot="start"></ion-icon>
           {{ isSaving ? 'Saving...' : (isEditMode ? 'Update Student' : 'Add Student') }}
         </ion-button>
-        <ion-button expand="block" fill="outline" routerLink="/students">
+        <ion-button expand="block" fill="outline" routerLink="/tabs/students">
           Cancel
         </ion-button>
       </div>

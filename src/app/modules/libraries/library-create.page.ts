@@ -72,7 +72,7 @@ export class LibraryCreatePage implements OnInit {
       }
 
       await this.toast('Library created and set as active.', 'success');
-      this.navController.navigateRoot('/dashboard');
+      this.navController.navigateRoot('/tabs/dashboard');
     } catch (error) {
       console.error('createLibrary error:', error);
       await this.toast(error instanceof Error ? error.message : 'Failed to create library.', 'danger');
@@ -97,7 +97,7 @@ export class LibraryCreatePage implements OnInit {
   }
 
   goBack() {
-    this.navController.navigateBack('/libraries');
+    this.navController.navigateBack('/tabs/libraries');
   }
 }
 

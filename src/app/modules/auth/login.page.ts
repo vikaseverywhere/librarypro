@@ -64,7 +64,7 @@ export class LoginPage implements OnInit {
       }
 
       await loading.dismiss();
-      await this.router.navigate(['/dashboard'], { replaceUrl: true });
+      await this.router.navigate(['/tabs/dashboard'], { replaceUrl: true });
     } catch (error: any) {
       await loading.dismiss();
       this.showError(error.message || 'Login failed');

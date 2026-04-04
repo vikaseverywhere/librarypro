@@ -162,7 +162,7 @@ export class SignupPage implements OnInit, OnDestroy {
       if (verified) {
         this.stopPolling();
         await this.showSuccess('Email verified! Redirecting...');
-        await this.router.navigate(['/dashboard'], { replaceUrl: true });
+        await this.router.navigate(['/tabs/dashboard'], { replaceUrl: true });
       } else {
         this.showError('Email not yet verified. Please click the LATEST link in your email.');
       }
@@ -180,7 +180,7 @@ export class SignupPage implements OnInit, OnDestroy {
         if (verified) {
           this.stopPolling();
           await this.showSuccess('Email verified! Redirecting...');
-          await this.router.navigate(['/dashboard'], { replaceUrl: true });
+          await this.router.navigate(['/tabs/dashboard'], { replaceUrl: true });
         }
       } catch (_) { /* silent */ }
     }, 3000);

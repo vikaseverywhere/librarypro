@@ -112,7 +112,7 @@ export class FeesPage implements OnInit {
   }
 
   onAddFee() {
-    this.navController.navigateForward('/fees/collect');
+    this.navController.navigateForward('/tabs/fees/collect');
   }
 
   async onGenerateMonthlyFees() {
@@ -262,6 +262,6 @@ export class FeesPage implements OnInit {
   }
 
   goBack() {
-    this.navController.navigateBack('/dashboard');
+    this.navController.navigateBack('/tabs/dashboard');
   }
 }
