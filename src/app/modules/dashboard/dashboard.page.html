@@ -27,7 +27,7 @@
           <ion-icon name="alert-circle-outline"></ion-icon>
           <div class="stat-value">₹{{ stats.totalFeesPending | number: '1.0-0' }}</div>
           <div class="stat-label">Pending Fees</div>
-          <div class="stat-subtitle">From {{ stats.totalStudents }} students</div>
+          <div class="stat-subtitle">{{ dueFees.length }} student(s) pending</div>
         </div>
         <div class="stat-card danger" (click)="navigateToFees()">
           <ion-icon name="close-circle-outline"></ion-icon>

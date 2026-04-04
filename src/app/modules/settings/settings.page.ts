@@ -5,6 +5,7 @@ import { filter, take } from 'rxjs/operators';
 import { AuthService, UserProfile } from '../../core/auth/auth.service';
 import { FirestoreService } from '../../core/firestore/firestore.service';
 import { LibraryStateService } from '../../core/library-state.service';
+import { PlanService, Plan } from '../../core/firestore/plan.service';
 
 @Component({
   selector: 'app-settings',
@@ -17,8 +18,9 @@ export class SettingsPage implements OnInit, OnDestroy {
   libraryPhotoUrl = '';
   city = '';
   totalSeats = 50;
-  monthlyFee = 5000;
   userEmail = '';
+  plans: Plan[] = [];
+  plansLoading = false;
   private userProfile: UserProfile | null = null;
   private seatsSub?: Subscription;
 
@@ -33,7 +35,8 @@ export class SettingsPage implements OnInit, OnDestroy {
     private alertController: AlertController,
     private firestoreService: FirestoreService,
     private libraryStateService: LibraryStateService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private planService: PlanService
   ) {}
 
   ngOnInit() {
@@ -50,6 +53,7 @@ export class SettingsPage implements OnInit, OnDestroy {
 
   async ionViewWillEnter() {
     await this.loadSettings();
+    await this.loadPlans();
   }
 
   async loadSettings() {
@@ -63,9 +67,19 @@ export class SettingsPage implements OnInit, OnDestroy {
       const libraryData: any = await this.firestoreService.getLibraryData(this.userProfile.libraryId);
       if (libraryData) {
         this.totalSeats = Number(libraryData.totalSeats ?? libraryData.seatCount ?? this.totalSeats);
-        this.monthlyFee = Number(libraryData.monthlyFee ?? this.monthlyFee);
         this.libraryPhotoUrl = String(libraryData.photoUrl || '');
       }
+    }
+  }
+
+  async loadPlans() {
+    this.plansLoading = true;
+    try {
+      this.plans = await this.planService.getActivePlans();
+    } catch (e) {
+      console.error('Error loading plans:', e);
+    } finally {
+      this.plansLoading = false;
     }
   }
 
@@ -143,14 +157,6 @@ export class SettingsPage implements OnInit, OnDestroy {
         await this.libraryStateService.updateTotalSeats(seats, this.userProfile.libraryId);
         // this.totalSeats will update automatically via the subscription in ngOnInit
 
-      } else if (field === 'monthlyFee') {
-        const fee = parseInt(value, 10);
-        if (isNaN(fee) || fee < 0) {
-          await this.showToast('Please enter a valid fee amount.', 'danger');
-          return;
-        }
-        await this.firestoreService.updateLibrary(this.userProfile.libraryId, { monthlyFee: fee });
-        this.monthlyFee = fee;
       }
 
       this.editing[field] = false;

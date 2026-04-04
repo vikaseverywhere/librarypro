@@ -144,6 +144,10 @@ export class FeesPage implements OnInit {
               const eligible = students.filter((s: any) => Number(s.monthlyFee || 0) > 0);
 
               for (const s of eligible) {
+                const alreadyExists = await this.feeService.feeExistsForStudentMonth(
+                  s.studentId, month
+                );
+                if (alreadyExists) continue;
                 await this.feeService.createFee({
                   studentId: s.studentId,
                   studentDocId: s.id || s.studentId,
@@ -242,23 +246,7 @@ export class FeesPage implements OnInit {
   }
 
   async onViewAllPaid() {
-    const paidFees = await this.feeService.getFeesByStatus('paid');
-    const total = paidFees.reduce((sum, f) => sum + f.amount, 0);
-    const alert = await this.alertController.create({
-      header: 'Paid Fees',
-      message: `Total ${paidFees.length} paid records.\nTotal collected: ₹${total.toLocaleString('en-IN')}`,
-      buttons: ['OK']
-    });
-    await alert.present();
-  }
-
-  async onSendReminder(fee: PendingFee) {
-    const alert = await this.alertController.create({
-      header: 'Reminder Ready',
-      message: `Reminder prepared for ${fee.studentName}. You can integrate SMS/Email next.`,
-      buttons: ['OK']
-    });
-    await alert.present();
+    this.navController.navigateForward('/tabs/transactions');
   }
 
   goBack() {

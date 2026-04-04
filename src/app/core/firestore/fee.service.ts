@@ -73,6 +73,15 @@ export class FeeService {
     return docId;
   }
 
+  async feeExistsForStudentMonth(studentId: string, month: string): Promise<boolean> {
+    const existing = await this.firestoreService.list<Fee>('fees', [
+      { type: 'where', field: 'studentId', operator: '==', value: studentId },
+      { type: 'where', field: 'month', operator: '==', value: month },
+      { type: 'limit', limit: 1 }
+    ]);
+    return existing.length > 0;
+  }
+
   async createBulkFees(
     studentIds: string[],
     month: string,
@@ -123,10 +132,9 @@ export class FeeService {
     await this.firestoreService.update('fees', feeId, updateData);
 
     try {
-      // Ledger transaction
-      const transactionId = `txn_${Date.now()}`;
-      await this.firestoreService.create<Transaction>('transactions', {
-        transactionId,
+      // Use Firestore auto-ID for transactions — collision-free
+      const docId = await this.firestoreService.create<Transaction>('transactions', {
+        transactionId: '',  // back-filled below
         type: 'fee_paid',
         feeId: feeId,
         studentId: fee.studentId,
@@ -134,11 +142,12 @@ export class FeeService {
         amount: Number(fee.amount || 0),
         month: String(fee.month || ''),
         receiptNumber,
-        paymentMethod: 'cash',
+        paymentMethod: paymentMethod === 'razorpay' ? 'cash' : (paymentMethod as 'cash'),
         actorUid: profile?.uid,
         actorEmail: profile?.email,
-        note: 'Manual cash payment'
-      } as Transaction, transactionId);
+        note: paymentMethod === 'razorpay' ? 'Razorpay payment' : 'Manual cash payment'
+      } as Transaction);
+      await this.firestoreService.update('transactions', docId, { transactionId: docId });
     } catch (e) {
       console.warn('Ledger write failed (payment still OK):', e);
     }
@@ -163,9 +172,8 @@ export class FeeService {
     } as Partial<Fee>);
 
     try {
-      const transactionId = `txn_${Date.now()}`;
-      await this.firestoreService.create<Transaction>('transactions', {
-        transactionId,
+      const docId = await this.firestoreService.create<Transaction>('transactions', {
+        transactionId: '',  // back-filled below
         type: 'fee_waived',
         feeId: feeId,
         studentId: fee.studentId,
@@ -177,7 +185,8 @@ export class FeeService {
         actorUid: profile?.uid,
         actorEmail: profile?.email,
         note: String(reason || '').trim() || 'Waived'
-      } as Transaction, transactionId);
+      } as Transaction);
+      await this.firestoreService.update('transactions', docId, { transactionId: docId });
     } catch (e) {
       console.warn('Ledger write failed (waive still OK):', e);
     }

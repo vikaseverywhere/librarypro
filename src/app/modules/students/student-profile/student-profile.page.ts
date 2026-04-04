@@ -27,7 +27,6 @@ export class StudentProfilePage implements OnInit {
 
   async ngOnInit() {
     this.studentId = String(this.route.snapshot.paramMap.get('id') || '').trim();
-    await this.load();
   }
 
   async ionViewWillEnter() {

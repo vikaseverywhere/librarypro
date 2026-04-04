@@ -171,7 +171,6 @@ export class StudentFormPage implements OnInit, OnDestroy {
       (this.plans.length === 0 || this.selectedPlanId) &&
       String(this.formData.city || '').trim() &&
       String(this.formData.state || '').trim() &&
-      String(this.formData.addressLine2 || '').trim() &&
       /^\d{6}$/.test(String(this.formData.pincode || '').trim())
     );
   }

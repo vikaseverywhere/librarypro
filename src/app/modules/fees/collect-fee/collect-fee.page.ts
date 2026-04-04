@@ -87,7 +87,7 @@ export class CollectFeePage implements OnInit {
     const due = new Date();
     due.setDate(due.getDate() + 7);
     this.feeDueDate = due.toISOString().slice(0, 10);
-    this.feeAmount = '5000';
+    this.feeAmount = '';
   }
 
   async loadStudents() {

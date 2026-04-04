@@ -98,39 +98,37 @@
             <ion-icon name="create-outline"></ion-icon>
           </ion-button>
         </div>
-        <ion-item-divider></ion-item-divider>
-
-        <!-- Monthly Fee -->
-        <div class="setting-item">
-          <div class="setting-info" *ngIf="!editing['monthlyFee']">
-            <h3>Monthly Fee</h3>
-            <p class="value">₹{{ monthlyFee | number: '1.0-0' }}</p>
-          </div>
-          <div class="setting-edit" *ngIf="editing['monthlyFee']">
-            <label>Monthly Fee (₹)</label>
-            <input type="number" [(ngModel)]="editValues['monthlyFee']" class="edit-input" min="0" />
-            <div class="edit-actions">
-              <ion-button size="small" (click)="saveField('monthlyFee')" [disabled]="isSaving['monthlyFee']">
-                <ion-spinner *ngIf="isSaving['monthlyFee']" name="crescent"></ion-spinner>
-                <span *ngIf="!isSaving['monthlyFee']">Save</span>
-              </ion-button>
-              <ion-button size="small" fill="outline" (click)="cancelEdit('monthlyFee')">Cancel</ion-button>
-            </div>
-          </div>
-          <ion-button *ngIf="!editing['monthlyFee']" fill="clear" (click)="startEdit('monthlyFee', monthlyFee)">
-            <ion-icon name="create-outline"></ion-icon>
-          </ion-button>
-        </div>
       </div>
     </div>
 
     <div class="settings-group">
       <h2 class="section-title">Fee Plans</h2>
       <div class="settings-card">
-        <ion-button expand="block" routerLink="/tabs/plans">
-          <ion-icon name="document-text-outline" slot="start"></ion-icon>
-          Manage Plans
-        </ion-button>
+        <div *ngIf="plansLoading" style="text-align:center; padding:12px">
+          <ion-spinner name="crescent"></ion-spinner>
+        </div>
+        <div *ngIf="!plansLoading && plans.length === 0" class="setting-item">
+          <div class="setting-info">
+            <h3>No plans created yet</h3>
+            <p class="subtitle">Go to Manage Plans to create your first fee plan</p>
+          </div>
+        </div>
+        <ng-container *ngFor="let plan of plans; let last = last">
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>{{ plan.name }}</h3>
+              <p class="subtitle">{{ plan.shift }} · {{ plan.shiftType === 'full' ? 'Full' : 'Half' }} · {{ plan.duration | titlecase }}</p>
+            </div>
+            <span style="font-weight:700; color:var(--ion-color-primary)">₹{{ plan.amount | number:'1.0-0' }}</span>
+          </div>
+          <ion-item-divider *ngIf="!last"></ion-item-divider>
+        </ng-container>
+        <div style="padding: 10px 0 2px">
+          <ion-button expand="block" fill="outline" routerLink="/tabs/plans">
+            <ion-icon name="create-outline" slot="start"></ion-icon>
+            Manage Plans
+          </ion-button>
+        </div>
       </div>
     </div>
 
