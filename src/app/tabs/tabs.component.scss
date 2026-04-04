@@ -1,34 +1,64 @@
 ion-tab-bar {
   --background: #ffffff;
-  --border: 1px solid #e0e0e0;
+  --border: none;
   padding-bottom: env(safe-area-inset-bottom, 0);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -1px 0 rgba(30, 58, 107, 0.08), 0 -4px 20px rgba(26, 58, 107, 0.1);
+  height: 58px;
 }
 
 ion-tab-button {
-  --color: #999;
-  --color-selected: #5b21b6;
+  --color: #9aacbe;
+  --color-selected: #2275a0;
   --padding-top: 6px;
   --padding-bottom: 4px;
-  font-size: 11px;
+  font-size: 10.5px;
+  position: relative;
+  transition: background 0.2s ease;
+
+  /* outline icon — shown when NOT selected */
+  .tab-icon-off { display: block; }
+  .tab-icon-on  { display: none; }
 
   ion-icon {
     font-size: 22px;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   ion-label {
     font-weight: 500;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.1px;
+    font-size: 10.5px;
+  }
+
+  /* top active indicator pill */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 28px;
+    height: 3px;
+    background: linear-gradient(90deg, #2275a0, #3399cc);
+    border-radius: 0 0 4px 4px;
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   &.tab-selected {
-    ion-icon {
-      color: #5b21b6;
-    }
+    --color-selected: #1a3a6b;
+
+    &::before { transform: translateX(-50%) scaleX(1); }
+
+    /* swap to filled icon */
+    .tab-icon-off { display: none; }
+    .tab-icon-on  { display: block; }
+
+    ion-icon { transform: translateY(-1px) scale(1.1); }
+
     ion-label {
-      color: #5b21b6;
-      font-weight: 600;
+      font-weight: 700;
+      color: #1a3a6b;
     }
   }
 }
