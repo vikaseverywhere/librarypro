@@ -114,17 +114,17 @@ export class SignupPage implements OnInit, OnDestroy {
     const uid = profile.uid;
 
     if (this.ownerPhotoFile) {
-      const dataUrl = await this.photoUploadService.compressToDataUrl(
-        this.ownerPhotoFile, { maxSizePx: 720, quality: 0.7 }
+      const url = await this.photoUploadService.uploadPhoto(
+        this.ownerPhotoFile, `users/${uid}/photo.jpg`, { maxSizePx: 720, quality: 0.7 }
       );
-      await this.firestore.doc(`users/${uid}`).set({ photoUrl: dataUrl, updatedAt: new Date() }, { merge: true });
+      await this.firestore.doc(`users/${uid}`).set({ photoUrl: url, updatedAt: new Date() }, { merge: true });
     }
 
     if (this.libraryPhotoFile) {
-      const dataUrl = await this.photoUploadService.compressToDataUrl(
-        this.libraryPhotoFile, { maxSizePx: 900, quality: 0.72 }
+      const url = await this.photoUploadService.uploadPhoto(
+        this.libraryPhotoFile, `libraries/${libraryId}/photo.jpg`, { maxSizePx: 900, quality: 0.72 }
       );
-      await this.firestore.doc(`libraries/${libraryId}`).set({ photoUrl: dataUrl, updatedAt: new Date() }, { merge: true });
+      await this.firestore.doc(`libraries/${libraryId}`).set({ photoUrl: url, updatedAt: new Date() }, { merge: true });
     }
   }
 

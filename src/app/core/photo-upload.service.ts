@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { compressImageToJpeg } from './utils/image-compress';
 
 @Injectable({
@@ -6,12 +7,15 @@ import { compressImageToJpeg } from './utils/image-compress';
 })
 export class PhotoUploadService {
 
+  constructor(private storage: AngularFireStorage) {}
+
   /**
-   * Compresses a photo and returns a base64 data URL.
-   * Stored directly in Firestore — no Firebase Storage needed (free plan friendly).
+   * Compresses the photo to JPEG, uploads it to Firebase Storage at the given path,
+   * and returns the public download URL to store in Firestore.
    */
-  async compressToDataUrl(
+  async uploadPhoto(
     file: File,
+    storagePath: string,
     opts: { maxSizePx?: number; quality?: number } = {}
   ): Promise<string> {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -25,17 +29,10 @@ export class PhotoUploadService {
 
     const { maxSizePx = 720, quality = 0.7 } = opts;
     const blob = await compressImageToJpeg(file, { maxSizePx, quality });
-    return this.blobToDataUrl(blob);
-  }
-
-  private blobToDataUrl(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        resolve(reader.result as string);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+    const ref = this.storage.ref(storagePath);
+    await ref.put(blob, { contentType: 'image/jpeg' });
+    return new Promise<string>((resolve, reject) => {
+      ref.getDownloadURL().subscribe({ next: resolve, error: reject });
     });
   }
 }

@@ -16,6 +16,7 @@ import { AngularFireModule } from '@angular/fire/compat';
 import { AngularFireAuthModule } from '@angular/fire/compat/auth';
 import { AngularFirestoreModule } from '@angular/fire/compat/firestore';
 import { AngularFireFunctionsModule } from '@angular/fire/compat/functions';
+import { AngularFireStorageModule } from '@angular/fire/compat/storage';
 
 import { environment } from '../environments/environment';
 
@@ -106,7 +107,8 @@ const routes: Routes = [
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireAuthModule,
     AngularFirestoreModule.enablePersistence({ synchronizeTabs: true }),
-    AngularFireFunctionsModule
+    AngularFireFunctionsModule,
+    AngularFireStorageModule
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },

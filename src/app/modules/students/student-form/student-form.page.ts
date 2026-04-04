@@ -63,11 +63,10 @@ export class StudentFormPage implements OnInit, OnDestroy {
     private planService: PlanService,
     private photoUploadService: PhotoUploadService
   ) {
-    console.log('StudentFormPage constructor called');
+
   }
 
   async ngOnInit() {
-    console.log('StudentFormPage ngOnInit called');
     this.authService.userProfile.subscribe((profile) => {
       if (!profile) return;
       this.libraryName = profile.libraryName || '';
@@ -136,21 +135,13 @@ export class StudentFormPage implements OnInit, OnDestroy {
     }
   }
 
-  ionViewWillLoad() {
-    console.log('StudentFormPage ionViewWillLoad');
-  }
+  ionViewWillLoad() {}
 
-  ionViewDidLoad() {
-    console.log('StudentFormPage ionViewDidLoad');
-  }
+  ionViewDidLoad() {}
 
-  ionViewWillEnter() {
-    console.log('StudentFormPage ionViewWillEnter');
-  }
+  ionViewWillEnter() {}
 
-  ionViewDidEnter() {
-    console.log('StudentFormPage ionViewDidEnter');
-  }
+  ionViewDidEnter() {}
 
   isFormValid(): boolean {
     const seat = Number(this.formData.seatNumber);
@@ -162,6 +153,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
       this.formData.name &&
       this.formData.fatherName &&
       this.formData.email &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.formData.email.trim()) &&
       this.formData.phone &&
       /^\d{10}$/.test(phone) &&
       this.formData.seatNumber &&
@@ -232,7 +224,6 @@ export class StudentFormPage implements OnInit, OnDestroy {
   }
 
   async onSave() {
-    console.log('onSave called', this.formData);
     // Auto-resolve pincode -> city/state for strict validation.
     await this.resolvePincode();
 
@@ -264,8 +255,14 @@ export class StudentFormPage implements OnInit, OnDestroy {
     try {
       let photoUrl: string | undefined;
       if (this.selectedPhotoFile) {
-        photoUrl = await this.photoUploadService.compressToDataUrl(
+        const libraryId = this.libraryStateService.currentLibraryId;
+        const photoId = (this.isEditMode && this.studentId)
+          ? this.studentId
+          : `${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
+        const storagePath = `libraries/${libraryId}/students/${photoId}/photo.jpg`;
+        photoUrl = await this.photoUploadService.uploadPhoto(
           this.selectedPhotoFile,
+          storagePath,
           { maxSizePx: 720, quality: 0.7 }
         );
       }
@@ -317,7 +314,6 @@ export class StudentFormPage implements OnInit, OnDestroy {
   }
 
   goBack() {
-    console.log('goBack called');
     this.router.navigate(['/tabs/students']);
   }
 

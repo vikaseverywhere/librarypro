@@ -143,20 +143,27 @@ export class FeesPage implements OnInit {
               const students = await this.studentService.getAllStudents(10000);
               const eligible = students.filter((s: any) => Number(s.monthlyFee || 0) > 0);
 
-              for (const s of eligible) {
-                const alreadyExists = await this.feeService.feeExistsForStudentMonth(
-                  s.studentId, month
+              // Parallel existence checks, then batched creates
+              const existsResults = await Promise.all(
+                eligible.map((s: any) => this.feeService.feeExistsForStudentMonth(s.studentId, month))
+              );
+              const toCreate = eligible.filter((_: any, i: number) => !existsResults[i]);
+
+              const BATCH = 10;
+              for (let i = 0; i < toCreate.length; i += BATCH) {
+                await Promise.all(
+                  toCreate.slice(i, i + BATCH).map((s: any) =>
+                    this.feeService.createFee({
+                      studentId: s.studentId,
+                      studentDocId: s.id || s.studentId,
+                      studentName: s.name,
+                      amount: Number(s.monthlyFee || 0),
+                      month,
+                      dueDate,
+                      status: 'pending'
+                    })
+                  )
                 );
-                if (alreadyExists) continue;
-                await this.feeService.createFee({
-                  studentId: s.studentId,
-                  studentDocId: s.id || s.studentId,
-                  studentName: s.name,
-                  amount: Number(s.monthlyFee || 0),
-                  month,
-                  dueDate,
-                  status: 'pending'
-                });
               }
 
               await this.loadFees();

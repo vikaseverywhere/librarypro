@@ -183,12 +183,10 @@ export class StudentsPage implements OnInit {
   }
 
   onAddStudent() {
-    console.log('onAddStudent - navigating to /students/add');
     this.router.navigate(['/tabs/students/add']);
   }
 
   onEditStudent(student: Student) {
-    console.log('onEditStudent - navigating to /students/edit/' + student.studentId);
     this.router.navigate(['/tabs/students/edit', student.studentId]);
   }
 

@@ -61,13 +61,13 @@ export class LibraryCreatePage implements OnInit {
         monthlyFee: fee
       });
 
-      // Upload optional library photo (compressed to data URL, stored in Firestore)
+      // Upload optional library photo to Firebase Storage
       if (this.libraryPhotoFile) {
-        const dataUrl = await this.photoUploadService.compressToDataUrl(
-          this.libraryPhotoFile, { maxSizePx: 900, quality: 0.72 }
+        const url = await this.photoUploadService.uploadPhoto(
+          this.libraryPhotoFile, `libraries/${libraryId}/photo.jpg`, { maxSizePx: 900, quality: 0.72 }
         );
         await this.firestore.doc(`libraries/${libraryId}`).set(
-          { photoUrl: dataUrl, updatedAt: new Date() }, { merge: true }
+          { photoUrl: url, updatedAt: new Date() }, { merge: true }
         );
       }
 

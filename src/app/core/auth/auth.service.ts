@@ -157,6 +157,17 @@ export class AuthService {
     }
   }
 
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.afAuth.currentUser;
+    if (!user || !user.email) throw new Error('No authenticated user.');
+
+    // Firebase requires recent sign-in before sensitive operations.
+    const { EmailAuthProvider } = await import('firebase/auth');
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await (user as any).reauthenticateWithCredential(credential);
+    await (user as any).updatePassword(newPassword);
+  }
+
   async logout() {
     try {
       this.profileSub?.unsubscribe();

@@ -171,15 +171,70 @@ export class SettingsPage implements OnInit, OnDestroy {
   }
 
   async onChangePassword() {
-    const alert = await this.alertController.create({
+    const inputAlert = await this.alertController.create({
       header: 'Change Password',
-      message: 'A password reset link will be sent to your email.',
+      inputs: [
+        {
+          name: 'currentPassword',
+          type: 'password',
+          placeholder: 'Current Password'
+        },
+        {
+          name: 'newPassword',
+          type: 'password',
+          placeholder: 'New Password (min 8 chars)'
+        },
+        {
+          name: 'confirmPassword',
+          type: 'password',
+          placeholder: 'Confirm New Password'
+        }
+      ],
       buttons: [
         { text: 'Cancel', role: 'cancel' },
-        { text: 'Send Reset Link', handler: () => { /* integrate email reset */ } }
+        {
+          text: 'Update',
+          handler: async (data: any) => {
+            const current = String(data?.currentPassword || '').trim();
+            const newPwd = String(data?.newPassword || '').trim();
+            const confirm = String(data?.confirmPassword || '').trim();
+
+            if (!current || !newPwd || !confirm) {
+              await this.showToast('All fields are required.', 'danger');
+              return false;
+            }
+            if (newPwd.length < 8) {
+              await this.showToast('New password must be at least 8 characters.', 'danger');
+              return false;
+            }
+            if (newPwd !== confirm) {
+              await this.showToast('New password and confirmation do not match.', 'danger');
+              return false;
+            }
+            if (current === newPwd) {
+              await this.showToast('New password must be different from current password.', 'danger');
+              return false;
+            }
+
+            try {
+              await this.authService.changePassword(current, newPwd);
+              await this.showToast('Password updated successfully.');
+            } catch (e: any) {
+              const msg = e?.message || '';
+              if (msg.includes('wrong-password') || msg.includes('invalid-credential')) {
+                await this.showToast('Current password is incorrect.', 'danger');
+              } else if (msg.includes('too-many-requests')) {
+                await this.showToast('Too many attempts. Please try again later.', 'danger');
+              } else {
+                await this.showToast(`Failed to update password. ${msg}`, 'danger');
+              }
+            }
+            return true;
+          }
+        }
       ]
     });
-    await alert.present();
+    await inputAlert.present();
   }
 
   getInitials(name: string): string {
