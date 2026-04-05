@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AlertController, ToastController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { StudentService, Student } from '../../core/firestore/student.service';
@@ -49,6 +49,7 @@ export class StudentsPage implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private studentService: StudentService,
     private feeService: FeeService,
     private alertController: AlertController,
@@ -88,6 +89,10 @@ export class StudentsPage implements OnInit, OnDestroy {
   }
 
   async ionViewWillEnter() {
+    const viewParam = this.route.snapshot.queryParamMap.get('view');
+    if (viewParam === 'pending') {
+      this.viewMode = 'pending';
+    }
     await this.loadStudents();
   }
 

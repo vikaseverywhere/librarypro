@@ -234,6 +234,10 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.navController.navigateForward('/tabs/fees');
   }
 
+  navigateToPendingFees() {
+    this.navController.navigateForward('/tabs/students', { queryParams: { view: 'pending' } });
+  }
+
   navigateToSettings() {
     this.navController.navigateForward('/tabs/settings');
   }

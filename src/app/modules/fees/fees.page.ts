@@ -8,6 +8,7 @@ import { AuthService, UserProfile } from '../../core/auth/auth.service';
 interface PendingFee extends Fee {
   studentName: string;
   studentId: string;
+  photoUrl?: string;
 }
 
 @Component({
@@ -17,6 +18,8 @@ interface PendingFee extends Fee {
 })
 export class FeesPage implements OnInit, OnDestroy {
   pendingFees: PendingFee[] = [];
+  filteredFees: PendingFee[] = [];
+  pagedFees: PendingFee[] = [];
   feeStats = {
     totalPending: 0,
     totalOverdue: 0,
@@ -26,6 +29,16 @@ export class FeesPage implements OnInit, OnDestroy {
   isLoading = false;
   libraryName = '';
   userEmail = '';
+
+  // Filter & search
+  feeFilter: 'all' | 'overdue' | 'pending' = 'all';
+  searchTerm = '';
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 20;
+  totalPages = 1;
+
   private profileSub?: Subscription;
 
   constructor(
@@ -82,7 +95,8 @@ export class FeesPage implements OnInit, OnDestroy {
         return {
           ...fee,
           studentName: student ? student.name : (legacyName || 'Unknown Student'),
-          studentId: rawStudentId
+          studentId: rawStudentId,
+          photoUrl: student?.photoUrl || ''
         };
       });
 
@@ -106,7 +120,70 @@ export class FeesPage implements OnInit, OnDestroy {
       console.error('Error loading fees:', error);
     } finally {
       this.isLoading = false;
+      this.applyFilterAndSearch();
     }
+  }
+
+  get overdueCount(): number {
+    return this.pendingFees.filter(f => f.status === 'overdue').length;
+  }
+
+  get pendingCount(): number {
+    return this.pendingFees.filter(f => f.status === 'pending').length;
+  }
+
+  get showingFrom(): number {
+    return this.filteredFees.length === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get showingTo(): number {
+    return Math.min(this.currentPage * this.pageSize, this.filteredFees.length);
+  }
+
+  get pageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+    let end = Math.min(this.totalPages, start + maxVisible - 1);
+    if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+  }
+
+  onFilterChange(value: unknown) {
+    this.feeFilter = (String(value) as any) || 'all';
+    this.currentPage = 1;
+    this.applyFilterAndSearch();
+  }
+
+  onFeeSearch() {
+    this.currentPage = 1;
+    this.applyFilterAndSearch();
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.updatePage();
+  }
+
+  private applyFilterAndSearch() {
+    let result = [...this.pendingFees];
+    if (this.feeFilter === 'overdue') result = result.filter(f => f.status === 'overdue');
+    else if (this.feeFilter === 'pending') result = result.filter(f => f.status === 'pending');
+
+    const term = this.searchTerm.trim().toLowerCase();
+    if (term) result = result.filter(f => f.studentName.toLowerCase().includes(term));
+
+    this.filteredFees = result;
+    this.totalPages = Math.max(1, Math.ceil(result.length / this.pageSize));
+    if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
+    this.updatePage();
+  }
+
+  private updatePage() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    this.pagedFees = this.filteredFees.slice(start, start + this.pageSize);
   }
 
   getInitials(name: string): string {
@@ -114,6 +191,20 @@ export class FeesPage implements OnInit, OnDestroy {
     const first = parts[0]?.[0] || '';
     const second = parts[1]?.[0] || '';
     return (first + second).toUpperCase();
+  }
+
+  toDate(value: any): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    if (typeof value?.toDate === 'function') return value.toDate(); // Firestore Timestamp
+    if (typeof value === 'string' || typeof value === 'number') return new Date(value);
+    if (value?.seconds) return new Date(value.seconds * 1000); // Timestamp shape fallback
+    return null;
+  }
+
+  toMonthDate(month: string): Date | null {
+    if (!month) return null;
+    return new Date(month + '-01');
   }
 
   onAddFee() {

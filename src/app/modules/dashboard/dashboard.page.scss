@@ -696,6 +696,131 @@ ion-content {
   gap: 8px;
 }
 
+/* ═══════════════════════════════════════════
+   Fee Summary Card (replaces old two-section layout)
+   ═══════════════════════════════════════════ */
+
+.fee-summary-section {
+  margin-bottom: 1.5rem;
+}
+
+.fee-summary-card {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(16, 71, 122, 0.08);
+  border: 1px solid rgba(30, 80, 130, 0.08);
+  overflow: hidden;
+}
+
+.fee-summary-group {
+  padding: 0.85rem 1rem 0.6rem;
+}
+
+.fsg-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.55rem;
+
+  ion-icon {
+    font-size: 0.95rem;
+  }
+
+  &.overdue-label {
+    color: #dc2626;
+    ion-icon { color: #dc2626; }
+  }
+
+  &.pending-label {
+    color: #d97706;
+    ion-icon { color: #d97706; }
+  }
+}
+
+.fsg-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fsg-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  background: #f9fbff;
+  font-size: 0.85rem;
+}
+
+.fsg-name {
+  flex: 1;
+  font-weight: 600;
+  color: #1e3a5f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fsg-meta {
+  font-size: 0.75rem;
+  color: #9cadbe;
+  flex-shrink: 0;
+}
+
+.fsg-amount {
+  font-weight: 700;
+  flex-shrink: 0;
+
+  &.overdue { color: #dc2626; }
+  &.pending  { color: #d97706; }
+}
+
+.fsg-more {
+  font-size: 0.78rem;
+  color: #9cadbe;
+  text-align: right;
+  padding-right: 0.25rem;
+  margin-top: 0.2rem;
+}
+
+.fsg-divider {
+  height: 1px;
+  background: rgba(30, 80, 130, 0.07);
+  margin: 0 0.75rem;
+}
+
+.fee-summary-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #f0f6ff;
+  border-top: 1px solid rgba(30, 80, 130, 0.08);
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #e2eeff;
+  }
+
+  span {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #2b7cd4;
+  }
+
+  ion-icon {
+    color: #2b7cd4;
+    font-size: 1rem;
+  }
+}
+
+
 .payment-item {
   display: flex;
   align-items: center;

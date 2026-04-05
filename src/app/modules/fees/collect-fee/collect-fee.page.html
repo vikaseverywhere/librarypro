@@ -50,18 +50,23 @@
     <div *ngIf="!isLoadingStudents && filteredStudents.length > 0" class="student-table">
       <div class="table-header">
         <span class="col-name">Student</span>
+        <span class="col-seat">Seat</span>
         <span class="col-phone">Phone</span>
         <span class="col-pending">Pending</span>
         <span class="col-action"></span>
       </div>
       <div class="table-row" *ngFor="let student of filteredStudents" (click)="selectStudent(student)">
         <div class="col-name">
-          <div class="avatar-small">{{ getInitials(student.name) }}</div>
+          <div class="avatar-small">
+            <img *ngIf="student.photoUrl" [src]="student.photoUrl" alt="" />
+            <span *ngIf="!student.photoUrl">{{ getInitials(student.name) }}</span>
+          </div>
           <div class="name-info">
             <span class="name">{{ student.name }}</span>
             <span class="id">{{ student.studentId }}</span>
           </div>
         </div>
+        <span class="col-seat">#{{ student.seatNumber || '—' }}</span>
         <span class="col-phone">{{ student.phone }}</span>
         <span class="col-pending" [class.has-pending]="student.totalFeePending > 0">
           ₹{{ student.totalFeePending | number: '1.0-0' }}
@@ -77,7 +82,10 @@
   <div *ngIf="step === 2 && selectedStudent" class="step-content">
     <!-- Selected Student Card -->
     <div class="selected-student-card">
-      <div class="student-avatar">{{ getInitials(selectedStudent.name) }}</div>
+      <div class="student-avatar">
+        <img *ngIf="selectedStudent.photoUrl" [src]="selectedStudent.photoUrl" alt="" />
+        <span *ngIf="!selectedStudent.photoUrl">{{ getInitials(selectedStudent.name) }}</span>
+      </div>
       <div class="student-info">
         <h3>{{ selectedStudent.name }}</h3>
         <p>{{ selectedStudent.studentId }} &middot; {{ selectedStudent.phone }}</p>

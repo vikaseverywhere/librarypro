@@ -118,39 +118,63 @@
       </div>
     </div>
 
-    <!-- Overdue Payments -->
-    <div class="payments-section">
-      <h2 class="section-title overdue-title">Overdue Payments</h2>
-      <div *ngIf="overdueFees.length === 0" class="all-clear">
-        <ion-icon name="checkmark-circle" class="clear-icon"></ion-icon>
-        <span>ALL CLEAR !</span>
-      </div>
-      <div *ngIf="overdueFees.length > 0" class="payment-list">
-        <div class="payment-item overdue" *ngFor="let fee of overdueFees" (click)="navigateToFees()">
-          <div class="payment-info">
-            <span class="payment-name">{{ fee.studentName || 'Student' }}</span>
-            <span class="payment-meta">{{ fee.month }} • Due: {{ fee.dueDate | date:'d MMM' }}</span>
-          </div>
-          <span class="payment-amount overdue">₹{{ fee.amount | number:'1.0-0' }}</span>
-        </div>
-      </div>
-    </div>
+    <!-- Fee Summary Card -->
+    <div class="fee-summary-section">
+      <h2 class="section-title">Pending Fees</h2>
 
-    <!-- Due Payments -->
-    <div class="payments-section">
-      <h2 class="section-title due-title">Due Payments</h2>
-      <div *ngIf="dueFees.length === 0" class="all-clear">
+      <!-- All clear -->
+      <div *ngIf="overdueFees.length === 0 && dueFees.length === 0" class="all-clear">
         <ion-icon name="checkmark-circle" class="clear-icon"></ion-icon>
         <span>ALL CLEAR !</span>
       </div>
-      <div *ngIf="dueFees.length > 0" class="payment-list">
-        <div class="payment-item pending" *ngFor="let fee of dueFees" (click)="navigateToFees()">
-          <div class="payment-info">
-            <span class="payment-name">{{ fee.studentName || 'Student' }}</span>
-            <span class="payment-meta">{{ fee.month }} • Due: {{ fee.dueDate | date:'d MMM' }}</span>
+
+      <!-- Summary card when fees exist -->
+      <div *ngIf="overdueFees.length > 0 || dueFees.length > 0" class="fee-summary-card">
+
+        <!-- Overdue rows (max 3) -->
+        <div *ngIf="overdueFees.length > 0" class="fee-summary-group">
+          <div class="fsg-label overdue-label">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            Overdue
           </div>
-          <span class="payment-amount pending">₹{{ fee.amount | number:'1.0-0' }}</span>
+          <div class="fsg-rows">
+            <div class="fsg-row" *ngFor="let fee of overdueFees.slice(0, 3)">
+              <span class="fsg-name">{{ fee.studentName || 'Student' }}</span>
+              <span class="fsg-meta">{{ fee.month }}</span>
+              <span class="fsg-amount overdue">₹{{ fee.amount | number:'1.0-0' }}</span>
+            </div>
+            <div *ngIf="overdueFees.length > 3" class="fsg-more">
+              +{{ overdueFees.length - 3 }} more overdue
+            </div>
+          </div>
         </div>
+
+        <div *ngIf="overdueFees.length > 0 && dueFees.length > 0" class="fsg-divider"></div>
+
+        <!-- Pending rows (max 3) -->
+        <div *ngIf="dueFees.length > 0" class="fee-summary-group">
+          <div class="fsg-label pending-label">
+            <ion-icon name="time-outline"></ion-icon>
+            Pending
+          </div>
+          <div class="fsg-rows">
+            <div class="fsg-row" *ngFor="let fee of dueFees.slice(0, 3)">
+              <span class="fsg-name">{{ fee.studentName || 'Student' }}</span>
+              <span class="fsg-meta">{{ fee.month }}</span>
+              <span class="fsg-amount pending">₹{{ fee.amount | number:'1.0-0' }}</span>
+            </div>
+            <div *ngIf="dueFees.length > 3" class="fsg-more">
+              +{{ dueFees.length - 3 }} more pending
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer CTA -->
+        <div class="fee-summary-footer" (click)="navigateToPendingFees()">
+          <span>View all {{ overdueFees.length + dueFees.length }} students with pending fees</span>
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </div>
+
       </div>
     </div>
 

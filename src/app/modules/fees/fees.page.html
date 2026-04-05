@@ -1,7 +1,7 @@
 <ion-page>
 <app-header mode="main"></app-header>
 
-<ion-content >
+<ion-content>
   <div class="fees-header">
     <h1>Fee Management</h1>
     <p>Track and manage student fees</p>
@@ -43,59 +43,132 @@
       </ion-button>
     </div>
 
-    <!-- Pending Fees -->
+    <!-- Pending Fees Table -->
     <div class="fees-list">
-      <h2 class="section-title">Pending Fees</h2>
-      
+      <div class="fees-list-header">
+        <h2 class="section-title" style="margin:0">Pending Fees</h2>
+        <span class="total-count" *ngIf="!isLoading">{{ filteredFees.length }} entries</span>
+      </div>
+
+      <!-- Search + Filter -->
+      <div class="fee-controls" *ngIf="!isLoading && pendingFees.length > 0">
+        <ion-searchbar
+          [(ngModel)]="searchTerm"
+          (ionInput)="onFeeSearch()"
+          placeholder="Search by student name..."
+          debounce="300"
+          class="fee-search"
+        ></ion-searchbar>
+        <ion-segment [(ngModel)]="feeFilter" (ionChange)="onFilterChange($event.detail.value)" class="fee-filter-segment">
+          <ion-segment-button value="all">
+            <ion-label>All <span class="seg-count">{{ pendingFees.length }}</span></ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="overdue">
+            <ion-label>Overdue <span class="seg-count overdue">{{ overdueCount }}</span></ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="pending">
+            <ion-label>Pending <span class="seg-count pending">{{ pendingCount }}</span></ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </div>
+
+      <!-- Loading -->
       <div *ngIf="isLoading" class="loading-state">
         <ion-spinner name="crescent"></ion-spinner>
         <p>Loading fees...</p>
       </div>
 
+      <!-- Empty: no fees at all -->
       <div *ngIf="!isLoading && pendingFees.length === 0" class="empty-state">
         <ion-icon name="checkmark-circle-outline"></ion-icon>
         <h3>All fees collected!</h3>
         <p>No pending fees at the moment</p>
       </div>
 
-      <div *ngIf="!isLoading && pendingFees.length > 0" class="fee-cards">
-        <div class="fee-card" *ngFor="let fee of pendingFees" [class.overdue]="fee.status === 'overdue'">
-          <div class="fee-header">
-            <div class="fee-student">
-              <div class="avatar">{{ getInitials(fee.studentName) }}</div>
-              <div>
-                <h3>{{ fee.studentName }}</h3>
-                <p>ID: {{ fee.studentId }}</p>
-              </div>
+      <!-- Empty: search/filter returned nothing -->
+      <div *ngIf="!isLoading && pendingFees.length > 0 && filteredFees.length === 0" class="empty-state">
+        <ion-icon name="search-outline"></ion-icon>
+        <h3>No results</h3>
+        <p>Try changing your search or filter</p>
+      </div>
+
+      <!-- Compact Table -->
+      <div *ngIf="!isLoading && pagedFees.length > 0" class="fee-table">
+        <!-- Header -->
+        <div class="ft-header">
+          <span class="ft-col-avatar"></span>
+          <span class="ft-col-name">Student</span>
+          <span class="ft-col-month">Month</span>
+          <span class="ft-col-due">Due Date</span>
+          <span class="ft-col-status">Status</span>
+          <span class="ft-col-amount">Amount</span>
+          <span class="ft-col-actions">Actions</span>
+        </div>
+
+        <!-- Rows -->
+        <div class="ft-row" *ngFor="let fee of pagedFees" [class.row-overdue]="fee.status === 'overdue'">
+          <div class="ft-col-avatar">
+            <div class="fee-avatar">
+              <img *ngIf="fee.photoUrl" [src]="fee.photoUrl" [alt]="fee.studentName" />
+              <span *ngIf="!fee.photoUrl">{{ getInitials(fee.studentName) }}</span>
             </div>
-            <div class="fee-amount">₹{{ fee.amount | number: '1.0-0' }}</div>
           </div>
-          <div class="fee-details">
-            <div class="detail">
-              <span class="label">Month:</span>
-              <span>{{ fee.month }}</span>
-            </div>
-            <div class="detail">
-              <span class="label">Due Date:</span>
-              <span>{{ fee.dueDate | date:'MMM d, y' }}</span>
-            </div>
-            <div class="detail">
-              <span class="label">Status:</span>
-              <span [class]="'status ' + fee.status">{{ fee.status | titlecase }}</span>
-            </div>
+          <div class="ft-col-name">
+            <span class="ft-name">{{ fee.studentName }}</span>
+            <span class="ft-id">{{ fee.studentId }}</span>
           </div>
-          <div class="fee-actions">
-            <ion-button size="small" (click)="onMarkPaid(fee)">
-              <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+          <div class="ft-col-month">{{ toMonthDate(fee.month) | date:'MMM yyyy' }}</div>
+          <div class="ft-col-due">{{ toDate(fee.dueDate) | date:'d MMM y' }}</div>
+          <div class="ft-col-status">
+            <span class="status-badge" [class]="'badge-' + fee.status">{{ fee.status | titlecase }}</span>
+          </div>
+          <div class="ft-col-amount">₹{{ fee.amount | number:'1.0-0' }}</div>
+          <div class="ft-col-actions" (click)="$event.stopPropagation()">
+            <button class="action-btn paid-btn" (click)="onMarkPaid(fee)">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+              <span>Mark Paid</span>
+            </button>
+            <button class="action-btn waive-btn" (click)="onWaiveFee(fee)">
+              <ion-icon name="ban-outline"></ion-icon>
+              <span>Waive</span>
+            </button>
+          </div>
+          <!-- Mobile-only meta row: month + due + status on second line -->
+          <div class="ft-mobile-meta">
+            <span class="mobile-meta-item">{{ toMonthDate(fee.month) | date:'MMM yyyy' }}</span>
+            <span class="mobile-meta-sep">·</span>
+            <span class="mobile-meta-item">Due: {{ toDate(fee.dueDate) | date:'d MMM y' }}</span>
+            <span class="mobile-meta-sep">·</span>
+            <span class="status-badge" [class]="'badge-' + fee.status">{{ fee.status | titlecase }}</span>
+          </div>
+          <!-- Mobile-only action row -->
+          <div class="ft-mobile-actions" (click)="$event.stopPropagation()">
+            <button class="action-btn paid-btn" (click)="onMarkPaid(fee)">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
               Mark Paid
-            </ion-button>
-            <ion-button size="small" color="warning" fill="outline" (click)="onWaiveFee(fee)">
-              <ion-icon name="ban-outline" slot="start"></ion-icon>
+            </button>
+            <button class="action-btn waive-btn" (click)="onWaiveFee(fee)">
+              <ion-icon name="ban-outline"></ion-icon>
               Waive
-            </ion-button>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="ft-pagination" *ngIf="totalPages > 1">
+          <span class="page-info">{{ showingFrom }}–{{ showingTo }} of {{ filteredFees.length }}</span>
+          <div class="page-controls">
+            <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">«</button>
+            <button
+              *ngFor="let p of pageNumbers"
+              class="page-btn"
+              [class.active]="p === currentPage"
+              (click)="goToPage(p)">{{ p }}</button>
+            <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">»</button>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </ion-content>
