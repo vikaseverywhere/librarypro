@@ -100,8 +100,6 @@ export class DashboardPage implements OnInit, OnDestroy {
         .sort((a, b) => new Date(a.dueDate as any).getTime() - new Date(b.dueDate as any).getTime())
         .slice(0, 5);
     });
-
-    this.loadDashboard();
   }
 
   ngOnDestroy() {
@@ -142,10 +140,12 @@ export class DashboardPage implements OnInit, OnDestroy {
         this.libraryPhotoUrl = '';
       }
 
-      const studentStats = await this.studentService.getStudentStats();
+      const [studentStats, allStudents] = await Promise.all([
+        this.studentService.getStudentStats(),
+        this.studentService.getAllStudents(1000)
+      ]);
 
-      // Load occupied seat data for the seat map
-      const allStudents = await this.studentService.getAllStudents(1000);
+      // Build occupied seat data for the seat map
       this.occupiedSeatData = allStudents
         .filter(s => s.seatNumber && s.seatNumber > 0)
         .map(s => ({

@@ -50,6 +50,15 @@ export interface Student {
 export class StudentService {
   private students$ = new BehaviorSubject<Student[]>([]);
 
+  // Short-lived cache to avoid repeated Firestore reads within the same navigation
+  private _allStudentsRaw: Student[] | null = null;
+  private _allStudentsCacheTime = 0;
+  private readonly STUDENTS_CACHE_TTL = 30_000; // 30 seconds
+
+  private invalidateStudentCache(): void {
+    this._allStudentsRaw = null;
+  }
+
   constructor(
     private firestoreService: FirestoreService,
     private libraryStateService: LibraryStateService
@@ -184,6 +193,7 @@ export class StudentService {
     };
     const docId = await this.firestoreService.create('students', studentData);
     await this.firestoreService.update('students', docId, { studentId: docId });
+    this.invalidateStudentCache();
     return docId;
   }
 
@@ -223,22 +233,28 @@ export class StudentService {
       data = rest;
     }
 
-    return this.firestoreService.update('students', studentId, data);
+    const result = await this.firestoreService.update('students', studentId, data);
+    this.invalidateStudentCache();
+    return result;
   }
 
   async deleteStudent(studentId: string): Promise<void> {
     // Soft delete: mark inactive.
-    return this.firestoreService.update('students', studentId, {
+    const result = await this.firestoreService.update('students', studentId, {
       isActive: false,
       inactiveAt: new Date(),
       seatStatus: 'vacant',
       // Free the seat: removing seatNumber prevents seat validation conflicts.
       seatNumber: null as any
     } as any);
+    this.invalidateStudentCache();
+    return result;
   }
 
   async permanentDeleteStudent(studentId: string): Promise<void> {
-    return this.firestoreService.delete('students', studentId);
+    const result = await this.firestoreService.delete('students', studentId);
+    this.invalidateStudentCache();
+    return result;
   }
 
   async reactivateStudent(studentId: string, data: Partial<Student>): Promise<void> {
@@ -248,13 +264,15 @@ export class StudentService {
         throw new Error(`Seat ${data.seatNumber} is already assigned to another student.`);
       }
     }
-    return this.firestoreService.update('students', studentId, {
+    const result = await this.firestoreService.update('students', studentId, {
       ...data,
       isActive: true,
       inactiveAt: null as any,
       seatStatus: 'occupied',
       enrollmentDate: new Date()
     } as any);
+    this.invalidateStudentCache();
+    return result;
   }
 
   async getStudent(studentId: string): Promise<Student | null> {
@@ -262,17 +280,27 @@ export class StudentService {
   }
 
   async getAllStudents(pageSize: number = 50): Promise<Student[]> {
-    const students = await this.firestoreService.list<Student>('students');
-    const studentArray = (students || [])
-      .filter((s) => s.isActive !== false)
+    const now = Date.now();
+    let raw: Student[];
+
+    if (this._allStudentsRaw && (now - this._allStudentsCacheTime) < this.STUDENTS_CACHE_TTL) {
+      raw = this._allStudentsRaw;
+    } else {
+      const fetched = await this.firestoreService.list<Student>('students');
+      raw = (fetched || []).filter((s) => s.isActive !== false);
+      this._allStudentsRaw = raw;
+      this._allStudentsCacheTime = now;
+    }
+
+    const sorted = [...raw]
       .sort((a, b) => {
         const aTime = a.createdAt ? new Date(a.createdAt as any).getTime() : 0;
         const bTime = b.createdAt ? new Date(b.createdAt as any).getTime() : 0;
         return bTime - aTime;
       })
       .slice(0, pageSize);
-    this.students$.next(studentArray);
-    return studentArray;
+    this.students$.next(sorted);
+    return sorted;
   }
 
   async getInactiveStudents(pageSize: number = 200): Promise<Student[]> {
