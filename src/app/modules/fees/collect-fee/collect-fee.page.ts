@@ -107,8 +107,8 @@ export class CollectFeePage implements OnInit {
   }
 
   private getPendingAmount(student: Student): number {
-    const keys = [this.normalizeKey(student.studentId), this.normalizeKey(student.id)].filter(Boolean);
-    return keys.reduce((sum, key) => sum + (this.pendingAmounts[key] || 0), 0);
+    const key = this.normalizeKey(student.studentId) || this.normalizeKey(student.id);
+    return key ? (this.pendingAmounts[key] || 0) : 0;
   }
 
   private applyPendingAmounts() {

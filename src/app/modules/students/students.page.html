@@ -23,11 +23,17 @@
         <ion-segment-button value="inactive">
           <ion-label>Inactive</ion-label>
         </ion-segment-button>
+        <ion-segment-button value="pending">
+          <ion-label>
+            Pending Fees
+            <span *ngIf="pendingFeeStudents.length > 0" class="pending-badge">{{ pendingFeeStudents.length }}</span>
+          </ion-label>
+        </ion-segment-button>
       </ion-segment>
     </div>
 
     <!-- Add Student Button -->
-    <div class="action-buttons">
+    <div class="action-buttons" *ngIf="viewMode !== 'pending'">
       <ion-button expand="block" class="add-btn" routerLink="/tabs/students/add">
         <ion-icon name="person-add-outline" slot="start"></ion-icon>
         Add New Student
@@ -36,7 +42,7 @@
 
     <!-- Students List -->
     <div class="students-list">
-      <h2 class="section-title">{{ viewMode === 'active' ? 'Active Students' : 'Inactive Students' }}</h2>
+      <h2 class="section-title">{{ viewMode === 'active' ? 'Active Students' : viewMode === 'inactive' ? 'Inactive Students' : 'Students with Pending Fees' }}</h2>
       
       <div *ngIf="isLoading" class="loading-state">
         <ion-spinner name="crescent"></ion-spinner>
@@ -59,14 +65,26 @@
         <p>Deleted students will appear here</p>
       </div>
 
-      <div *ngIf="!isLoading && filteredStudents.length === 0 && (viewMode === 'active' ? students.length : inactiveStudents.length) > 0" class="empty-state">
+      <div *ngIf="!isLoading && viewMode === 'pending' && pendingFeeStudents.length === 0" class="empty-state">
+        <ion-icon name="checkmark-circle-outline"></ion-icon>
+        <h3>All Clear!</h3>
+        <p>No students with pending fees</p>
+      </div>
+
+      <div *ngIf="!isLoading && viewMode !== 'pending' && filteredStudents.length === 0 && (viewMode === 'active' ? students.length : inactiveStudents.length) > 0" class="empty-state">
         <ion-icon name="search-outline"></ion-icon>
         <h3>No students found</h3>
         <p>Try adjusting your search terms</p>
       </div>
 
-      <!-- Compact Student List -->
-      <div *ngIf="!isLoading && pagedStudents.length > 0" class="student-list-compact">
+      <div *ngIf="!isLoading && viewMode === 'pending' && pendingFeeStudents.length > 0 && filteredStudents.length === 0" class="empty-state">
+        <ion-icon name="search-outline"></ion-icon>
+        <h3>No students found</h3>
+        <p>Try adjusting your search terms</p>
+      </div>
+
+      <!-- Compact Student List (Active / Inactive) -->
+      <div *ngIf="!isLoading && viewMode !== 'pending' && pagedStudents.length > 0" class="student-list-compact">
         <!-- Table Header -->
         <div class="list-header">
           <span class="col-avatar"></span>
@@ -117,7 +135,7 @@
           </div>
         </div>
 
-        <!-- Pagination -->
+        <!-- Pagination (Active/Inactive) -->
         <div class="pagination" *ngIf="totalPages > 1">
           <span class="page-info">Showing {{ showingFrom }}–{{ showingTo }} of {{ filteredStudents.length }}</span>
           <div class="page-controls">
@@ -131,9 +149,48 @@
           </div>
         </div>
       </div>
+
+      <!-- Pending Fees Cards -->
+      <div *ngIf="!isLoading && viewMode === 'pending' && pagedStudents.length > 0" class="pending-fees-list">
+        <div class="pending-fee-card" *ngFor="let student of pagedStudents" (click)="onOpenStudentProfile(student)">
+          <div class="pfc-left">
+            <div class="student-avatar-sm">
+              <img *ngIf="student.photoUrl" [src]="student.photoUrl" [alt]="student.name" />
+              <span *ngIf="!student.photoUrl">{{ getInitials(student.name) }}</span>
+            </div>
+            <div class="pfc-info">
+              <span class="pfc-name">{{ student.name }}</span>
+              <span class="pfc-meta">Seat {{ student.seatNumber || '-' }} &bull; {{ student.phone }}</span>
+            </div>
+          </div>
+          <div class="pfc-right">
+            <span class="pfc-amount">₹{{ student.totalFeePending | number: '1.0-0' }}</span>
+            <ion-button size="small" (click)="onCollectFee(student); $event.stopPropagation()">
+              <ion-icon name="card-outline" slot="start"></ion-icon>
+              Collect
+            </ion-button>
+          </div>
+        </div>
+
+        <!-- Pagination (Pending) -->
+        <div class="pagination" *ngIf="totalPages > 1">
+          <span class="page-info">Showing {{ showingFrom }}–{{ showingTo }} of {{ filteredStudents.length }}</span>
+          <div class="page-controls">
+            <button class="page-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">«</button>
+            <button
+              *ngFor="let p of pageNumbers"
+              class="page-btn"
+              [class.active]="p === currentPage"
+              (click)="goToPage(p)">{{ p }}</button>
+            <button class="page-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">»</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </ion-content>
+
 
 <!-- Seat Map Reactivation Modal -->
 <div class="seat-map-modal-backdrop" *ngIf="showSeatMapModal" (click)="closeSeatMapModal()">

@@ -114,14 +114,11 @@ export class FeeStateService implements OnDestroy {
       }
 
       const amount = Number(fee.amount || 0);
-      const keys = [
-        this.normalizeKey(fee.studentId),
-        this.normalizeKey((fee as any).studentDocId)
-      ].filter(Boolean);
-
-      keys.forEach((key) => {
+      // Use ONE canonical key to avoid double-counting during lookup.
+      const key = this.normalizeKey(fee.studentId) || this.normalizeKey((fee as any).studentDocId);
+      if (key) {
         pendingMap[key] = (pendingMap[key] || 0) + amount;
-      });
+      }
     });
 
     return pendingMap;
@@ -134,14 +131,11 @@ export class FeeStateService implements OnDestroy {
       if (fee.status !== 'paid' && fee.status !== 'waived') return;
 
       const amount = Number(fee.amount || 0);
-      const keys = [
-        this.normalizeKey(fee.studentId),
-        this.normalizeKey((fee as any).studentDocId)
-      ].filter(Boolean);
-
-      keys.forEach((key) => {
+      // Use ONE canonical key to avoid double-counting during lookup.
+      const key = this.normalizeKey(fee.studentId) || this.normalizeKey((fee as any).studentDocId);
+      if (key) {
         paidMap[key] = (paidMap[key] || 0) + amount;
-      });
+      }
     });
 
     return paidMap;

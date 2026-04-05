@@ -17,11 +17,12 @@ import { SeatInfo } from '../../shared/components/seat-map.component';
 export class StudentsPage implements OnInit, OnDestroy {
   students: Student[] = [];
   inactiveStudents: Student[] = [];
+  pendingFeeStudents: Student[] = [];
   filteredStudents: Student[] = [];
   pagedStudents: Student[] = [];
   isLoading = false;
   searchTerm = '';
-  viewMode: 'active' | 'inactive' = 'active';
+  viewMode: 'active' | 'inactive' | 'pending' = 'active';
   private rawStudents: Student[] = [];
   private pendingAmounts: Record<string, number> = {};
   private paidAmounts: Record<string, number> = {};
@@ -108,13 +109,13 @@ export class StudentsPage implements OnInit, OnDestroy {
   }
 
   private getPendingAmount(student: Student): number {
-    const keys = [this.normalizeKey(student.studentId), this.normalizeKey(student.id)].filter(Boolean);
-    return keys.reduce((sum, key) => sum + (this.pendingAmounts[key] || 0), 0);
+    const key = this.normalizeKey(student.studentId) || this.normalizeKey(student.id);
+    return key ? (this.pendingAmounts[key] || 0) : 0;
   }
 
   private getPaidAmount(student: Student): number {
-    const keys = [this.normalizeKey(student.studentId), this.normalizeKey(student.id)].filter(Boolean);
-    return keys.reduce((sum, key) => sum + (this.paidAmounts[key] || 0), 0);
+    const key = this.normalizeKey(student.studentId) || this.normalizeKey(student.id);
+    return key ? (this.paidAmounts[key] || 0) : 0;
   }
 
   private applyFeeAmounts() {
@@ -123,11 +124,14 @@ export class StudentsPage implements OnInit, OnDestroy {
       totalFeePending: this.getPendingAmount(student),
       totalFeePaid: this.getPaidAmount(student)
     }));
+    this.pendingFeeStudents = this.students
+      .filter(s => (s.totalFeePending || 0) > 0)
+      .sort((a, b) => (b.totalFeePending || 0) - (a.totalFeePending || 0));
     this.onSearchChange();
   }
 
   onSearchChange() {
-    const source = this.viewMode === 'active' ? this.students : this.inactiveStudents;
+    const source = this.viewMode === 'active' ? this.students : this.viewMode === 'inactive' ? this.inactiveStudents : this.pendingFeeStudents;
     if (this.searchTerm.trim()) {
       this.filteredStudents = source.filter(student =>
         student.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
@@ -178,8 +182,13 @@ export class StudentsPage implements OnInit, OnDestroy {
   }
 
   onViewModeChange(mode: unknown) {
-    this.viewMode = String(mode) === 'inactive' ? 'inactive' : 'active';
+    const m = String(mode);
+    this.viewMode = m === 'inactive' ? 'inactive' : m === 'pending' ? 'pending' : 'active';
     this.onSearchChange();
+  }
+
+  onCollectFee(student: Student) {
+    this.router.navigate(['/tabs/fees/collect'], { queryParams: { studentId: student.studentId } });
   }
 
   onAddStudent() {

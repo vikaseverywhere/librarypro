@@ -338,6 +338,117 @@ ion-content {
 }
 
 /* ═══════════════════════════════════════════
+   Pending Fees Tab Badge
+   ═══════════════════════════════════════════ */
+
+.pending-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dc2626;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 4px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* ═══════════════════════════════════════════
+   Pending Fees Cards View
+   ═══════════════════════════════════════════ */
+
+.pending-fees-list {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(16, 71, 122, 0.08);
+  border: 1px solid rgba(30, 80, 130, 0.08);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.pending-fee-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(30, 80, 130, 0.06);
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 0.75rem;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: #f5f8ff;
+  }
+}
+
+.pfc-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.pfc-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pfc-name {
+  font-weight: 600;
+  color: #1e3a5f;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pfc-meta {
+  font-size: 0.78rem;
+  color: #9cadbe;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pfc-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.pfc-amount {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #b91c1c;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .pending-fee-card {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pfc-right {
+    width: 100%;
+    justify-content: space-between;
+    padding-left: calc(32px + 0.75rem);
+  }
+}
+
+/* ═══════════════════════════════════════════
    Seat Map Reactivation Modal
    ═══════════════════════════════════════════ */
 
