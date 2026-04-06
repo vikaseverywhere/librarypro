@@ -58,7 +58,7 @@ service cloud.firestore {
         allow create: if belongsToLibrary(libraryId)
           && request.resource.data.amount is number
           && request.resource.data.amount > 0
-          && request.resource.data.status in ['pending', 'paid', 'overdue', 'waived']
+          && request.resource.data.status in ['pending', 'overdue']
           && request.resource.data.studentId is string
           && request.resource.data.studentId.size() > 0;
         allow update: if belongsToLibrary(libraryId)
@@ -75,11 +75,10 @@ service cloud.firestore {
         allow read, write: if belongsToLibrary(libraryId);
       }
       
-      // Transactions subcollection
+      // Transactions subcollection — append-only ledger (no update or delete)
       match /transactions/{transactionId} {
         allow read: if belongsToLibrary(libraryId);
-        // Spark plan: allow owner to write (no Cloud Functions).
-        allow write: if belongsToLibrary(libraryId);
+        allow create: if belongsToLibrary(libraryId);
       }
       
       // Invoices storage (future subcollection)

@@ -53,7 +53,7 @@
                   {{ f.status | titlecase }}
                 </ion-badge>
               </div>
-              <div style="margin-top:4px;">₹{{ f.amount | number:'1.0-0' }} • Due: {{ f.dueDate | date:'MMM d, y' }}</div>
+              <div style="margin-top:4px;">₹{{ f.amount | number:'1.0-0' }} • Due: {{ toDate(f.dueDate) | date:'MMM d, y' }}</div>
             </ion-label>
           </ion-item>
         </ion-list>

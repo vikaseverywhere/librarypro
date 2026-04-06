@@ -61,16 +61,15 @@ export class FeeService {
   ) {}
 
   async createFee(fee: Omit<Fee, 'id' | 'feeId'>): Promise<string> {
-    // Use Firestore auto-ID — collision-free even under concurrent bulk creation.
-    const feeData: Omit<Fee, 'id' | 'feeId'> & { feeId: string } = {
+    // Pre-generate ID so feeId is set in a single write (no second update needed).
+    const feeId = this.firestoreService.newId('fees');
+    const feeData = {
       ...fee,
-      feeId: '',  // will be back-filled after insert
+      feeId,
       status: this.calculateFeeStatus(fee.dueDate, 'pending')
     };
-    const docId = await this.firestoreService.create('fees', feeData);
-    // Back-fill feeId with the Firestore-generated doc ID for easy cross-referencing.
-    await this.firestoreService.update('fees', docId, { feeId: docId });
-    return docId;
+    await this.firestoreService.create('fees', feeData, feeId);
+    return feeId;
   }
 
   async feeExistsForStudentMonth(studentId: string, month: string): Promise<boolean> {
@@ -114,7 +113,9 @@ export class FeeService {
     }
 
     const receiptNumber = fee.receiptNumber || generateReceiptNumber(new Date());
-    const updateData: Partial<Fee> = {
+    const txnId = this.firestoreService.newId('transactions');
+
+    const feeUpdate: Record<string, any> = {
       status: 'paid',
       paidDate: new Date(),
       paymentMethod,
@@ -122,35 +123,28 @@ export class FeeService {
       paidByEmail: profile?.email,
       receiptNumber
     };
+    if (paymentId) feeUpdate['paymentId'] = paymentId;
 
-    // Firestore rejects explicit undefined values in update payloads.
-    if (paymentId) {
-      updateData.paymentId = paymentId;
-    }
+    const txnData: Record<string, any> = {
+      transactionId: txnId,
+      type: 'fee_paid',
+      feeId,
+      studentId: fee.studentId,
+      studentName: fee.studentName,
+      amount: Number(fee.amount || 0),
+      month: String(fee.month || ''),
+      receiptNumber,
+      paymentMethod: paymentMethod === 'razorpay' ? 'cash' : paymentMethod,
+      actorUid: profile?.uid,
+      actorEmail: profile?.email,
+      note: paymentMethod === 'razorpay' ? 'Razorpay payment' : 'Manual cash payment'
+    };
 
-    // Update fee first; even if ledger fails, payment should still succeed.
-    await this.firestoreService.update('fees', feeId, updateData);
-
-    try {
-      // Use Firestore auto-ID for transactions — collision-free
-      const docId = await this.firestoreService.create<Transaction>('transactions', {
-        transactionId: '',  // back-filled below
-        type: 'fee_paid',
-        feeId: feeId,
-        studentId: fee.studentId,
-        studentName: fee.studentName,
-        amount: Number(fee.amount || 0),
-        month: String(fee.month || ''),
-        receiptNumber,
-        paymentMethod: paymentMethod === 'razorpay' ? 'cash' : (paymentMethod as 'cash'),
-        actorUid: profile?.uid,
-        actorEmail: profile?.email,
-        note: paymentMethod === 'razorpay' ? 'Razorpay payment' : 'Manual cash payment'
-      } as Transaction);
-      await this.firestoreService.update('transactions', docId, { transactionId: docId });
-    } catch (e) {
-      console.warn('Ledger write failed (payment still OK):', e);
-    }
+    // Atomic: fee status + ledger entry succeed or fail together.
+    await this.firestoreService.batchWrite([
+      { type: 'update', collection: 'fees',         docId: feeId,  data: feeUpdate },
+      { type: 'set',    collection: 'transactions', docId: txnId,  data: txnData  }
+    ]);
   }
 
   async waiveFee(feeId: string, reason: string): Promise<void> {
@@ -161,35 +155,39 @@ export class FeeService {
     }
 
     const receiptNumber = fee.receiptNumber || generateReceiptNumber(new Date());
-    await this.firestoreService.update('fees', feeId, {
+    const txnId = this.firestoreService.newId('transactions');
+    const note = String(reason || '').trim() || 'Waived';
+
+    const feeUpdate: Record<string, any> = {
       status: 'waived',
       paymentMethod: 'waived',
       receiptNumber,
       waivedDate: new Date(),
       waivedByUid: profile?.uid,
       waivedByEmail: profile?.email,
-      waiveReason: String(reason || '').trim()
-    } as Partial<Fee>);
+      waiveReason: note
+    };
 
-    try {
-      const docId = await this.firestoreService.create<Transaction>('transactions', {
-        transactionId: '',  // back-filled below
-        type: 'fee_waived',
-        feeId: feeId,
-        studentId: fee.studentId,
-        studentName: fee.studentName,
-        amount: Number(fee.amount || 0),
-        month: String(fee.month || ''),
-        receiptNumber,
-        paymentMethod: 'waived',
-        actorUid: profile?.uid,
-        actorEmail: profile?.email,
-        note: String(reason || '').trim() || 'Waived'
-      } as Transaction);
-      await this.firestoreService.update('transactions', docId, { transactionId: docId });
-    } catch (e) {
-      console.warn('Ledger write failed (waive still OK):', e);
-    }
+    const txnData: Record<string, any> = {
+      transactionId: txnId,
+      type: 'fee_waived',
+      feeId,
+      studentId: fee.studentId,
+      studentName: fee.studentName,
+      amount: Number(fee.amount || 0),
+      month: String(fee.month || ''),
+      receiptNumber,
+      paymentMethod: 'waived',
+      actorUid: profile?.uid,
+      actorEmail: profile?.email,
+      note
+    };
+
+    // Atomic: fee status + ledger entry succeed or fail together.
+    await this.firestoreService.batchWrite([
+      { type: 'update', collection: 'fees',         docId: feeId,  data: feeUpdate },
+      { type: 'set',    collection: 'transactions', docId: txnId,  data: txnData  }
+    ]);
   }
 
   async updateFee(feeId: string, data: Partial<Fee>): Promise<void> {
@@ -205,34 +203,68 @@ export class FeeService {
   }
 
   async getAllFees(pageSize: number = 100): Promise<Fee[]> {
-    const fees = await this.firestoreService.list<Fee>('fees');
-    const feeArray = (fees || [])
-      .sort((a, b) => {
-        const aTime = a.dueDate ? new Date(a.dueDate as any).getTime() : 0;
-        const bTime = b.dueDate ? new Date(b.dueDate as any).getTime() : 0;
-        return bTime - aTime;
-      })
-      .slice(0, pageSize);
+    const fees = await this.firestoreService.list<Fee>('fees', [
+      { type: 'orderBy', field: 'dueDate', direction: 'desc' },
+      { type: 'limit', limit: pageSize }
+    ]);
+    const feeArray = fees || [];
     this.updateFeeStatuses(feeArray);
     this.fees$.next(feeArray);
     return feeArray;
   }
 
   async getFeesByStudent(studentId: string): Promise<Fee[]> {
-    const allFees = await this.getAllFees(10000);
-    return allFees
-      .filter(fee => fee.studentId === studentId)
-      .sort((a, b) => (b.month || '').localeCompare(a.month || ''));
+    const fees = await this.firestoreService.list<Fee>('fees', [
+      { type: 'where', field: 'studentId', operator: '==', value: studentId },
+      { type: 'orderBy', field: 'month', direction: 'desc' },
+      { type: 'limit', limit: 500 }
+    ]);
+    const feeArray = fees || [];
+    this.updateFeeStatuses(feeArray);
+    return feeArray;
   }
 
   async getFeesByStatus(status: 'pending' | 'paid' | 'overdue' | 'waived'): Promise<Fee[]> {
-    const allFees = await this.getAllFees(10000);
-    return allFees.filter(fee => fee.status === status);
+    // 'overdue' is computed client-side from 'pending'; query both for non-paid/waived
+    if (status === 'overdue') {
+      const fees = await this.firestoreService.list<Fee>('fees', [
+        { type: 'where', field: 'status', operator: 'in', value: ['pending', 'overdue'] },
+        { type: 'orderBy', field: 'dueDate', direction: 'asc' },
+        { type: 'limit', limit: 2000 }
+      ]);
+      const feeArray = fees || [];
+      this.updateFeeStatuses(feeArray);
+      return feeArray.filter(f => f.status === 'overdue');
+    }
+    if (status === 'pending') {
+      const fees = await this.firestoreService.list<Fee>('fees', [
+        { type: 'where', field: 'status', operator: 'in', value: ['pending', 'overdue'] },
+        { type: 'orderBy', field: 'dueDate', direction: 'asc' },
+        { type: 'limit', limit: 2000 }
+      ]);
+      const feeArray = fees || [];
+      this.updateFeeStatuses(feeArray);
+      return feeArray.filter(f => f.status === 'pending');
+    }
+    const fees = await this.firestoreService.list<Fee>('fees', [
+      { type: 'where', field: 'status', operator: '==', value: status },
+      { type: 'orderBy', field: 'dueDate', direction: 'desc' },
+      { type: 'limit', limit: 2000 }
+    ]);
+    const feeArray = fees || [];
+    this.updateFeeStatuses(feeArray);
+    return feeArray;
   }
 
   async getFeesByMonth(month: string): Promise<Fee[]> {
-    const allFees = await this.getAllFees(10000);
-    return allFees.filter(fee => fee.month === month);
+    const fees = await this.firestoreService.list<Fee>('fees', [
+      { type: 'where', field: 'month', operator: '==', value: month },
+      { type: 'orderBy', field: 'dueDate', direction: 'desc' },
+      { type: 'limit', limit: 1000 }
+    ]);
+    const feeArray = fees || [];
+    this.updateFeeStatuses(feeArray);
+    return feeArray;
   }
 
   private updateFeeStatuses(fees: Fee[]): void {

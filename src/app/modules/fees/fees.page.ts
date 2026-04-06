@@ -70,13 +70,12 @@ export class FeesPage implements OnInit, OnDestroy {
     try {
       this.feeStats = await this.feeService.getFeeStats();
 
-      const [pendingFees, overdueFees, students] = await Promise.all([
-        this.feeService.getFeesByStatus('pending'),
-        this.feeService.getFeesByStatus('overdue'),
+      const [unpaidFees, students] = await Promise.all([
+        this.feeService.getFeesByStatus('pending'), // returns both pending+overdue in one query
         this.studentService.getAllStudents(10000)
       ]);
 
-      const allPendingFees = [...pendingFees, ...overdueFees];
+      const allPendingFees = unpaidFees;
 
       const studentByKey = new Map<string, Student>();
       students.forEach((student) => {

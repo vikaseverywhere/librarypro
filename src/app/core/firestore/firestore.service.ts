@@ -238,4 +238,37 @@ export class FirestoreService {
       return unsubscribe;
     });
   }
+
+  /**
+   * Execute multiple writes atomically. Either all succeed or none do.
+   * ops: array of { type: 'set'|'update', collection, docId, data }
+   * For 'set' with no docId, a new ID is auto-generated.
+   */
+  async batchWrite(ops: Array<{
+    type: 'set' | 'update';
+    collection: string;
+    docId?: string;
+    data: Record<string, any>;
+  }>): Promise<void> {
+    const libraryId = await this.ensureLibraryId();
+    const batch = this.firestore.firestore.batch();
+    const now = new Date();
+
+    for (const op of ops) {
+      const colRef = this.firestore.firestore.collection(`libraries/${libraryId}/${op.collection}`);
+      const docRef = op.docId ? colRef.doc(op.docId) : colRef.doc();
+      if (op.type === 'set') {
+        batch.set(docRef, { ...op.data, createdAt: now, updatedAt: now });
+      } else {
+        batch.update(docRef, { ...op.data, updatedAt: now });
+      }
+    }
+
+    await batch.commit();
+  }
+
+  /** Generate a new unique Firestore document ID without writing anything. */
+  newId(collection: string): string {
+    return this.firestore.firestore.collection(`libraries/placeholder/${collection}`).doc().id;
+  }
 }
