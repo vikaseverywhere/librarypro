@@ -178,8 +178,8 @@ export class StudentFormPage implements OnInit, OnDestroy {
 
   private async resolvePincode(): Promise<void> {
     const pin = String(this.formData.pincode || '').trim();
-    if (!/^
-?\d{6}$/.test(pin)) {
+    // FIX: Regex should be on a single line
+    if (!/^\d{6}$/.test(pin)) {
       this.pincodeResolution = null;
       return;
     }
