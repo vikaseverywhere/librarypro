@@ -160,7 +160,22 @@ export class AuthService {
       this.loadUserProfile(uid);
       return this.userProfile$.value;
     } catch (error: any) {
-      throw new Error(`Login failed: ${error.message}`);
+      const code = error?.code || '';
+      if (
+        code === 'auth/user-not-found' ||
+        code === 'auth/wrong-password' ||
+        code === 'auth/invalid-credential' ||
+        code === 'auth/invalid-login-credentials'
+      ) {
+        throw new Error('Invalid email or password.');
+      }
+      if (code === 'auth/too-many-requests') {
+        throw new Error('Too many attempts. Please try again later.');
+      }
+      if (code === 'auth/user-disabled') {
+        throw new Error('This account has been disabled.');
+      }
+      throw new Error('Login failed. Please check your connection and try again.');
     }
   }
 

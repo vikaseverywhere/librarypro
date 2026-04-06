@@ -93,12 +93,10 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.feeListSub = this.feeStateService.fees$.subscribe((fees) => {
       this.overdueFees = fees
         .filter(f => f.status === 'overdue')
-        .sort((a, b) => new Date(a.dueDate as any).getTime() - new Date(b.dueDate as any).getTime())
-        .slice(0, 5);
+        .sort((a, b) => new Date(a.dueDate as any).getTime() - new Date(b.dueDate as any).getTime());
       this.dueFees = fees
         .filter(f => f.status === 'pending')
-        .sort((a, b) => new Date(a.dueDate as any).getTime() - new Date(b.dueDate as any).getTime())
-        .slice(0, 5);
+        .sort((a, b) => new Date(a.dueDate as any).getTime() - new Date(b.dueDate as any).getTime());
     });
   }
 

@@ -6,6 +6,7 @@ import { AuthService, UserProfile } from '../../core/auth/auth.service';
 import { FirestoreService } from '../../core/firestore/firestore.service';
 import { LibraryStateService } from '../../core/library-state.service';
 import { PlanService, Plan } from '../../core/firestore/plan.service';
+import { StudentService } from '../../core/firestore/student.service';
 
 @Component({
   selector: 'app-settings',
@@ -36,7 +37,8 @@ export class SettingsPage implements OnInit, OnDestroy {
     private firestoreService: FirestoreService,
     private libraryStateService: LibraryStateService,
     private toastController: ToastController,
-    private planService: PlanService
+    private planService: PlanService,
+    private studentService: StudentService
   ) {}
 
   ngOnInit() {
@@ -151,6 +153,14 @@ export class SettingsPage implements OnInit, OnDestroy {
         const seats = parseInt(value, 10);
         if (isNaN(seats) || seats < 1) {
           await this.showToast('Please enter a valid seat count (minimum 1).', 'danger');
+          return;
+        }
+        const stats = await this.studentService.getStudentStats();
+        if (seats < stats.occupiedSeats) {
+          await this.showToast(
+            `Cannot set below ${stats.occupiedSeats} — currently occupied seats.`,
+            'danger'
+          );
           return;
         }
         // LibraryStateService handles Firestore write + BehaviorSubject update

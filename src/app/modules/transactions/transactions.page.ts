@@ -25,6 +25,9 @@ export class TransactionsPage implements OnInit, OnDestroy {
 
   allTxns: Transaction[] = [];
   filteredTxns: Transaction[] = [];
+  pagedTxns: Transaction[] = [];
+  currentPage = 1;
+  readonly pageSize = 20;
 
   private txnsSub?: Subscription;
   private profileSub?: Subscription;
@@ -133,6 +136,23 @@ export class TransactionsPage implements OnInit, OnDestroy {
           month.includes(term)
         );
       });
+    this.currentPage = 1;
+    this.updatePage();
+  }
+
+  private updatePage() {
+    const start = (this.currentPage - 1) * this.pageSize;
+    this.pagedTxns = this.filteredTxns.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredTxns.length / this.pageSize));
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.updatePage();
   }
 
   resolveStudentName(t: Transaction): string {

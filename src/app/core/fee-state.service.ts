@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { BehaviorSubject, Observable, Subscription, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, combineLatest, of } from 'rxjs';
 import { map, shareReplay, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth/auth.service';
 import { Fee } from './firestore/fee.service';
@@ -31,21 +31,46 @@ export class FeeStateService implements OnDestroy {
       this.libraryId$.next(profile?.libraryId || '');
     });
 
-    this.fees$ = this.libraryId$.pipe(
-      switchMap((libraryId) => {
-        if (!libraryId) {
-          return of([] as Fee[]);
-        }
+    // Date boundary: only pull paid/waived fees from the last 13 months.
+    // This covers full-year revenue stats while excluding old historical records.
+    const thirteenMonthsAgo = new Date();
+    thirteenMonthsAgo.setMonth(thirteenMonthsAgo.getMonth() - 13);
 
+    // Query 1: All active (pending/overdue) fees — naturally bounded by active members.
+    // Uses single-field index on 'status'; no composite index required.
+    const activeFees$: Observable<Fee[]> = this.libraryId$.pipe(
+      switchMap((libraryId) => {
+        if (!libraryId) return of([] as Fee[]);
         return (this.firestore
           .collection<Fee>(`libraries/${libraryId}/fees`, (ref) =>
-            // Spark optimization: keep listener bounded.
-            // Sorted by dueDate so most relevant fees are included.
-            ref.orderBy('dueDate', 'desc').limit(5000)
+            ref.where('status', 'in', ['pending', 'overdue']).limit(500)
           )
           .valueChanges({ idField: 'id' }) as unknown) as Observable<Fee[]>;
       }),
       map((fees) => (fees || []).map((fee) => ({ ...fee, status: this.resolveStatus(fee) }))),
+      shareReplay(1)
+    );
+
+    // Query 2: Recent paid/waived fees for revenue stats.
+    // where + orderBy on the same field (dueDate) uses single-field index — no composite needed.
+    // Client-side filter keeps only paid/waived to avoid duplicating active fees.
+    const recentPaidFees$: Observable<Fee[]> = this.libraryId$.pipe(
+      switchMap((libraryId) => {
+        if (!libraryId) return of([] as Fee[]);
+        return (this.firestore
+          .collection<Fee>(`libraries/${libraryId}/fees`, (ref) =>
+            ref.where('dueDate', '>=', thirteenMonthsAgo)
+              .orderBy('dueDate', 'desc')
+              .limit(2000)
+          )
+          .valueChanges({ idField: 'id' }) as unknown) as Observable<Fee[]>;
+      }),
+      map((fees) => (fees || []).filter((fee) => fee.status === 'paid' || fee.status === 'waived')),
+      shareReplay(1)
+    );
+
+    this.fees$ = combineLatest([activeFees$, recentPaidFees$]).pipe(
+      map(([active, paid]) => [...active, ...paid]),
       shareReplay(1)
     );
 
