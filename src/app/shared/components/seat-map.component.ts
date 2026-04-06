@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, HostListener } from '@angular/core';
 
 export interface SeatInfo {
   number: number;
@@ -473,6 +473,9 @@ export class SeatMapComponent implements OnChanges {
   @Input() occupiedSeats: SeatInfo[] = [];
   @Input() mode: 'view' | 'select' = 'view';
   @Input() selectedSeat: number | null = null;
+
+  @HostListener('window:resize')
+  onResize() { this.buildGrid(); }
   @Input() editingStudentSeat: number | null = null;
   @Input() showNames = true;
 
@@ -494,9 +497,11 @@ export class SeatMapComponent implements OnChanges {
       return;
     }
 
-    // Auto columns: aim for ~10 per row but adjust for smaller totals
-    this.columns = this.totalSeats <= 20 ? 5 :
-                   this.totalSeats <= 50 ? 8 : 10;
+    // Auto columns: responsive to screen width
+    const w = window.innerWidth;
+    const maxCols = w <= 400 ? 5 : w <= 600 ? 8 : 10;
+    this.columns = this.totalSeats <= 20 ? Math.min(5, maxCols) :
+                   this.totalSeats <= 50 ? Math.min(8, maxCols) : maxCols;
 
     const occupiedMap = new Map<number, SeatInfo>();
     for (const s of this.occupiedSeats) {

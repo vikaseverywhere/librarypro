@@ -96,6 +96,11 @@ export class TransactionsPage implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  clearMonthFilter() {
+    this.monthFilter = '';
+    this.applyFilters();
+  }
+
   onMonthChange(value: string) {
     this.monthFilter = String(value || '').trim();
     this.applyFilters();

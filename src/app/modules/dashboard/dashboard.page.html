@@ -66,17 +66,17 @@
           <div class="stat-label">Overdue Fees</div>
           <div class="stat-subtitle">Action needed</div>
         </div>
-        <div class="stat-card success">
+        <div class="stat-card success" (click)="navigateToReceipts()">
           <ion-icon name="trending-up-outline"></ion-icon>
           <div class="stat-value">₹{{ stats.monthlyRevenue | number: '1.0-0' }}</div>
           <div class="stat-label">Monthly Revenue</div>
-          <div class="stat-subtitle">In last 30 days</div>
+          <div class="stat-subtitle">{{ currentDate | date:'MMMM yyyy' }}</div>
         </div>
         <div class="stat-card success-alt" (click)="navigateToReceipts()">
           <ion-icon name="bar-chart-outline"></ion-icon>
           <div class="stat-value">₹{{ stats.yearlyRevenue | number: '1.0-0' }}</div>
           <div class="stat-label">Yearly Revenue</div>
-          <div class="stat-subtitle">In last 12 months</div>
+          <div class="stat-subtitle">Year {{ currentDate | date:'yyyy' }}</div>
         </div>
       </div>
     </div>
