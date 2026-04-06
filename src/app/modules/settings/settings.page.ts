@@ -46,7 +46,6 @@ export class SettingsPage implements OnInit, OnDestroy {
     this.seatsSub = this.libraryStateService.totalSeats$.subscribe(seats => {
       this.totalSeats = seats;
     });
-    this.loadSettings();
   }
 
   ngOnDestroy() {

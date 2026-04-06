@@ -92,6 +92,10 @@ export class StudentsPage implements OnInit, OnDestroy {
     const viewParam = this.route.snapshot.queryParamMap.get('view');
     if (viewParam === 'pending') {
       this.viewMode = 'pending';
+    } else if (viewParam === 'inactive') {
+      this.viewMode = 'inactive';
+    } else {
+      this.viewMode = 'active';
     }
     await this.loadStudents();
   }

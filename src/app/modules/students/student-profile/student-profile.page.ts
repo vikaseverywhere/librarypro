@@ -70,5 +70,17 @@ export class StudentProfilePage implements OnInit {
   goBack() {
     this.navController.navigateBack('/tabs/students');
   }
+
+  goToCollectFee() {
+    this.navController.navigateForward(`/tabs/fees/collect/${this.studentId}`);
+  }
+
+  goToEditStudent() {
+    this.navController.navigateForward(`/tabs/students/edit/${this.studentId}`);
+  }
+
+  goToMarkPaid() {
+    this.navController.navigateForward(`/tabs/fees/mark-paid/${this.studentId}`);
+  }
 }
 

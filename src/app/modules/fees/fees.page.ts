@@ -354,4 +354,8 @@ export class FeesPage implements OnInit, OnDestroy {
   goBack() {
     this.navController.navigateBack('/tabs/dashboard');
   }
+
+  onEditFee(fee: Fee) {
+    this.navController.navigateForward([`/tabs/fees/edit/${fee.id}`]);
+  }
 }

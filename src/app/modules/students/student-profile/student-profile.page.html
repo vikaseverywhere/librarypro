@@ -35,6 +35,21 @@
             {{ student.city }}, {{ student.state }} - {{ student.pincode }}
           </div>
         </ion-card-content>
+        <!-- Action buttons -->
+        <div style="display:flex; gap:12px; margin-top:18px; justify-content:flex-end; flex-wrap:wrap;">
+          <ion-button color="primary" (click)="goToCollectFee()">
+            <ion-icon name="cash-outline" slot="start"></ion-icon>
+            Collect Fee
+          </ion-button>
+          <ion-button color="medium" (click)="goToEditStudent()">
+            <ion-icon name="create-outline" slot="start"></ion-icon>
+            Edit
+          </ion-button>
+          <ion-button color="success" (click)="goToMarkPaid()">
+            <ion-icon name="checkmark-done-outline" slot="start"></ion-icon>
+            Mark Paid
+          </ion-button>
+        </div>
       </ion-card>
 
       <ion-card>

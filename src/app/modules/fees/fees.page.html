@@ -132,6 +132,10 @@
               <ion-icon name="ban-outline"></ion-icon>
               <span>Waive</span>
             </button>
+            <button class="action-btn edit-btn" (click)="onEditFee(fee)">
+              <ion-icon name="create-outline"></ion-icon>
+              <span>Edit</span>
+            </button>
           </div>
           <!-- Mobile-only meta row: month + due + status on second line -->
           <div class="ft-mobile-meta">
@@ -150,6 +154,10 @@
             <button class="action-btn waive-btn" (click)="onWaiveFee(fee)">
               <ion-icon name="ban-outline"></ion-icon>
               Waive
+            </button>
+            <button class="action-btn edit-btn" (click)="onEditFee(fee)">
+              <ion-icon name="create-outline"></ion-icon>
+              Edit
             </button>
           </div>
         </div>

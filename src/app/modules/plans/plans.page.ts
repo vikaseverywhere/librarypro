@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { PlanService, Plan } from '../../core/firestore/plan.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -8,10 +8,11 @@ import { AuthService } from '../../core/auth/auth.service';
   templateUrl: './plans.page.html',
   styleUrls: ['./plans.page.scss']
 })
-export class PlansPage implements OnInit {
+export class PlansPage implements OnInit, OnDestroy {
   plans: Plan[] = [];
   isLoading = false;
   libraryName = '';
+  private profileSub?: any;
 
   // Form state
   showForm = false;
@@ -47,10 +48,15 @@ export class PlansPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.authService.userProfile.subscribe(profile => {
+    this.profileSub = this.authService.userProfile.subscribe(profile => {
       if (profile) this.libraryName = profile.libraryName || '';
     });
-    this.loadPlans();
+  }
+
+  ngOnDestroy() {
+    if (this.profileSub) {
+      this.profileSub.unsubscribe();
+    }
   }
 
   async ionViewWillEnter() {

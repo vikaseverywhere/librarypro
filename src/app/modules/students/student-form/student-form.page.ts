@@ -52,6 +52,8 @@ export class StudentFormPage implements OnInit, OnDestroy {
   private pincodeResolution: { city: string; state: string } | null = null;
   private isPincodeResolving = false;
 
+  private profileSub?: any;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -67,7 +69,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
   }
 
   async ngOnInit() {
-    this.authService.userProfile.subscribe((profile) => {
+    this.profileSub = this.authService.userProfile.subscribe((profile) => {
       if (!profile) return;
       this.libraryName = profile.libraryName || '';
       this.userEmail = profile.email || '';
@@ -176,7 +178,8 @@ export class StudentFormPage implements OnInit, OnDestroy {
 
   private async resolvePincode(): Promise<void> {
     const pin = String(this.formData.pincode || '').trim();
-    if (!/^\d{6}$/.test(pin)) {
+    if (!/^
+?\d{6}$/.test(pin)) {
       this.pincodeResolution = null;
       return;
     }
@@ -185,11 +188,27 @@ export class StudentFormPage implements OnInit, OnDestroy {
     this.isPincodeResolving = true;
 
     try {
-      const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      let res: Response;
+      try {
+        res = await fetch(`https://api.postalpincode.in/pincode/${pin}`, { signal: controller.signal });
+      } catch (err) {
+        if ((err as any).name === 'AbortError') {
+          await this.toast('Pincode lookup timed out. Please try again.', 'danger');
+        } else {
+          await this.toast('Failed to reach pincode API. Please check your connection.', 'danger');
+        }
+        this.pincodeResolution = null;
+        return;
+      } finally {
+        clearTimeout(timeout);
+      }
       const data: any[] = await res.json();
       const first = data?.[0];
       if (first?.Status !== 'Success' || !first?.PostOffice?.length) {
         this.pincodeResolution = null;
+        await this.toast('Invalid pincode or not found.', 'danger');
         return;
       }
       const po = first.PostOffice[0];
@@ -197,6 +216,7 @@ export class StudentFormPage implements OnInit, OnDestroy {
       const state = po?.State || '';
       if (!city || !state) {
         this.pincodeResolution = null;
+        await this.toast('Pincode found but missing city/state.', 'danger');
         return;
       }
       this.pincodeResolution = { city, state };
@@ -204,8 +224,9 @@ export class StudentFormPage implements OnInit, OnDestroy {
       this.formData.city = String(city);
       this.formData.state = String(state);
       void this.toast('City and State auto-filled from pincode — please verify.', 'success');
-    } catch {
+    } catch (e) {
       this.pincodeResolution = null;
+      await this.toast('Failed to resolve pincode. Please try again.', 'danger');
     } finally {
       this.isPincodeResolving = false;
     }
@@ -311,6 +332,9 @@ export class StudentFormPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    if (this.profileSub) {
+      this.profileSub.unsubscribe();
+    }
     if (this.photoPreviewUrl && this.photoPreviewUrl.startsWith('blob:')) {
       URL.revokeObjectURL(this.photoPreviewUrl);
     }

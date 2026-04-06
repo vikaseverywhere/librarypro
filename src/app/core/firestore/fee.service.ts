@@ -89,6 +89,8 @@ export class FeeService {
   ): Promise<string[]> {
     const feeIds: string[] = [];
     for (const studentId of studentIds) {
+      const exists = await this.feeExistsForStudentMonth(studentId, month);
+      if (exists) continue;
       const feeId = await this.createFee({
         studentId,
         amount,
